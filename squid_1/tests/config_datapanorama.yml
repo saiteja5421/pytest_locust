@@ -1,0 +1,29 @@
+testbed:
+
+  cloud:
+    # When requests modules are used instead of self.client this url is required
+    oauth2server: "https://sso.common.cloud.hpe.com/as/token.oauth2"
+
+  
+  users:
+
+    - username: s3pqauser@gmail.com
+      credential_name: s3auto
+      api_client_id : "Hard code for testing or set OAUTH_CLIENT_ID environment var when run via jenkins"
+      api_client_secret : "Hard code for testing or set OAUTH_CLIENT_SECRET environment var when run via jenkins"
+
+    - username: samselvaprabu@gmail.com
+      credential_name: sam_psr_s3fqa1
+      api_client_id : "Hard code for testing or set OAUTH_CLIENT_ID environment var when run via jenkins"
+      api_client_secret : "Hard code for testing or set OAUTH_CLIENT_SECRET environment var when run via jenkins"
+
+    - username: samselvaprabu@gmail.com
+      credential_name: sam_psr_s3fqa2
+      api_client_id : "Hard code for testing or set OAUTH_CLIENT_ID environment var when run via jenkins"
+      api_client_secret : "Hard code for testing or set OAUTH_CLIENT_SECRET environment var when run via jenkins"
+
+    - username: samselvaprabu@gmail.com
+      credential_name: sam_psr_s3fqa3
+      api_client_id : "Hard code for testing or set OAUTH_CLIENT_ID environment var when run via jenkins"
+      api_client_secret : "Hard code for testing or set OAUTH_CLIENT_SECRET environment var when run via jenkins"
+

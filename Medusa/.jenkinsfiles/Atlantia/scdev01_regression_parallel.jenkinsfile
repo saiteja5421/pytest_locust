@@ -1,0 +1,260 @@
+
+def marks_list = ["inventory", "protection_policy", "negative", "backup_restore_1", "backup_restore_2", "backup_restore_3", "tag_management", "rds_protection_policy", "rds_restore", "rds_backup", "gfrs", "gfrs_negative", "import_snapshot"]
+
+def parallelRegressionTestSuites = marks_list.collectEntries {
+    ["${it}" : generateRegressionTestStage(it)]
+}
+
+def parallelStopRegressionTestSuites = marks_list.collectEntries {
+    ["${it}" : generateStopRegressionTestStage(it)]
+}
+
+def date = new Date()
+DAY = date.format("EEEE")
+CONTAINER_NAME = "atlantia_e2e_scdev01_regression"
+
+def generateRegressionTestStage(mark_suite) {
+    return {
+        stage("stage: ${mark_suite}") {
+            def container = "${CONTAINER_NAME}_${mark_suite}_${DAY}"
+
+            def suite_name = "REGRESSION-SCDEV01-${mark_suite.toUpperCase()}"
+            def rp_description = "'Atlantia SCDEV01 B&R sanity build: ${env.BUILD_NUMBER}'"
+            echo "This is ${suite_name}."
+            def pytest_ini_file_name = "pytest_regression_scdev01.ini"
+
+            withCredentials([string(credentialsId: 'RP_API_KEY_2', variable: 'RP_API_KEY')]) {
+                def command = "docker run -w /Medusa --name ${container} --pull always --env-file $WORKSPACE/Medusa/.env -e RP_API_KEY=$RP_API_KEY -e SERVICE_VERSION='service2' -e CONFIG_FILE='variables_regression_scdev01' -v $WORKSPACE/Medusa:/Medusa hub.docker.hpecorp.net/atlantia-qa/regression:atlantia-e2e pytest -sv -m '${mark_suite} and validated' -c configs/atlantia/pytest/${pytest_ini_file_name} --log-file=logs/test_run_${mark_suite} --junitxml=logs/junit.xml"
+                if (params.ENABLE_REPORT_PORTAL) {
+                    sh "${command} --reportportal --rp-launch ${suite_name}_$DAY --rp-launch-description ${rp_description} /Medusa/tests/e2e/aws_protection/test_regression "
+                } else {
+                    sh "${command} /Medusa/tests/e2e/aws_protection/test_regression"
+                }
+            }            
+        }
+    }
+}
+
+def generateStopRegressionTestStage(mark_suite) {
+    return {
+        stage("Stop Container: ${mark_suite}") {
+            def container = "${CONTAINER_NAME}_${mark_suite}_${DAY}"
+
+            try {
+                echo "Attempting to extract test logs from ${container} container:"
+                sh "docker cp ${container}:/Medusa/logs/test_run_${mark_suite} ${WORKSPACE}/test_run_${mark_suite}"
+                archiveArtifacts artifacts: "test_run_${mark_suite}", followSymlinks: false
+            } catch (err) {
+                echo "Logs are not present in container ${env.CONTAINER_NAME}, unable to export artifact."
+            }
+
+            try {
+                echo "Attempting to stop ${container} container:"
+                sh "docker stop ${container}"
+                echo "${container} stopped."
+            } catch (err) {
+                echo "Container ${container} is not running."
+            }
+
+            try {
+                echo "Attempting to remove ${container} container:"
+                sh "docker rm ${container}"
+                echo "${container} removed."
+            } catch (err) {
+                echo "Container ${container} does not exist."
+            }
+        }
+    }
+}
+
+
+pipeline {
+    agent {
+        label 'atlantia-jenkins'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder logRotator(artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '20',
+                daysToKeepStr: '',
+                numToKeepStr: '20')
+        skipDefaultCheckout()
+        disableConcurrentBuilds()
+    }
+
+    triggers {
+        cron 'H 01 * * *'
+    }
+
+    parameters {
+        string(defaultValue: 'master',
+                description: 'Type your git ref if you want to run build using a specific tag (refs/tags/v1.4-scdev01) or branch (master).',
+                name: 'BRANCH_NAME',
+                trim: true)
+        booleanParam(defaultValue: true,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: 'ruben.kumar@hpe.com, sachin.uplaonkar@hpe.com, mark.balunis@hpe.com, tata@hpe.com',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Report Portal flag',
+                name: 'ENABLE_REPORT_PORTAL')
+    }
+
+    stages {
+        stage('stop hanging containers') {
+            steps {
+                script {
+                    try{
+                        sh """
+                            docker stop \$(docker ps -a -q --filter='name=${CONTAINER_NAME}*')
+                            docker rm \$(docker ps -a -q --filter='name=${CONTAINER_NAME}*')
+                        """
+                    } catch (err) {
+                        echo "Error: ${err}"
+                    }
+                }
+            }
+        }
+        stage('Checkout Repository') {
+            steps {
+                // git branch: "${params.BRANCH_NAME}", credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/qa_automation.git'
+                checkout(
+                            [$class: 'GitSCM',
+                            branches: [[name: "${params.BRANCH_NAME}"]],
+                            extensions: [cloneOption(noTags: false, reference: '', shallow: true, timeout: 30)],
+                            userRemoteConfigs: [[credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/qa_automation.git']]]
+                        )
+            }
+        }
+        stage('Copy Credentials') 
+        {
+            steps
+            {
+                withCredentials([file(credentialsId: 'scdev01_aws_env_regression', variable: 'environment')]) {
+                sh ''' 
+                cp $environment $WORKSPACE/Medusa/.env
+                chmod +x $WORKSPACE/Medusa/.env
+                '''
+                }
+
+            }
+        }
+        stage("Update Client and Secret IDs") {
+            steps {
+                script {
+                    // Get credentials for all users from Jenkins using client id stored as credentialId
+                    withCredentials([string(credentialsId: 'user_one_scdev01_sanity', variable: 'USER_ONE_CRED'), string(credentialsId: 'user_two_scdev01_sanity', variable: 'USER_TWO_CRED'), string(credentialsId: 'user_three_scdev01_sanity', variable: 'USER_THREE_CRED'), string(credentialsId: 'op_user_one_scdev01_sanity', variable: 'OP_USER_ONE_CRED')]) {
+                        // Execute Python script to update the client and secret ids in the config file
+                        sh '''
+                            python3 $WORKSPACE/Medusa/utils/update_config_file.py variables_regression_scdev01.ini operator $OP_USER_ONE_CRED
+                            python3 $WORKSPACE/Medusa/utils/update_config_file.py variables_regression_scdev01.ini admin $USER_ONE_CRED $USER_TWO_CRED $USER_THREE_CRED
+                        '''                        
+                    }
+                }
+            }
+        }
+        stage('Run Regression Tests') {
+            steps {
+                script {
+                    // All operations on setup need to be in sequence and before parallel testing 
+                    // if fails next stages will not run
+                    generateRegressionTestStage("setup").call()
+
+                    // Running parallel tests
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        parallel parallelRegressionTestSuites
+                    }
+
+                    // Running after all the parallel tests are executed
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        generateRegressionTestStage("dashboard").call()
+                    }
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        generateRegressionTestStage("rds_dashboard").call()
+                    }
+
+                    // Commenting out the following tests to resolve "state-conflict".
+                    // Unprotect activities can run for some time, interferring with later tests,
+                    // and in some cases - gum up the works for the entire next suite run.
+                    // https://nimblejira.nimblestorage.com/browse/DCS-16436
+                    //
+                    // catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    //     generateRegressionTestStage("import_snapshot_account_unregister").call()
+                    // }
+                    // catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    //     generateRegressionTestStage("rds_unregister").call()
+                    // }
+                    // catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    //     generateRegressionTestStage("accounts").call()
+                    // }
+                    // catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    //     generateRegressionTestStage("aws_account_unregister").call()
+                    // }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                // teardown unregistered both "api-automation-1" and "api-automation-2"
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    generateRegressionTestStage("teardown").call()
+                }
+
+                // Stop containers
+                generateStopRegressionTestStage("setup").call()
+                parallel parallelStopRegressionTestSuites
+                generateStopRegressionTestStage("dashboard").call()
+                generateStopRegressionTestStage("import_snapshot_account_unregister").call()
+                generateStopRegressionTestStage("rds_dashboard").call()
+                generateStopRegressionTestStage("rds_unregister").call()
+                generateStopRegressionTestStage("accounts").call()
+                generateStopRegressionTestStage("aws_account_unregister").call()
+                generateStopRegressionTestStage("teardown").call()
+
+
+                try {
+                    echo "Attempting to remove dangling images using 'docker image prune -f'"
+                    sh "docker image prune -f"
+                    echo "Removed dangling images"
+                } catch (err) {
+                    echo "Failed to remove dangling images from the system"
+                }
+
+                cleanWs()
+
+                if (params.SEND_EMAILS) {
+                    def emailSubject = "${env.JOB_NAME} ${env.BUILD_NUMBER} - Status ${currentBuild.result}"
+                    def emailBodyTemplate = """
+                    Build ran on branch: ${params.BRANCH_NAME}
+                    Are logs on Report Portal?: ${params.ENABLE_REPORT_PORTAL}
+
+                    Link to build: ${env.BUILD_URL}
+                    Link to console: ${env.BUILD_URL}console
+                    Link to artifact: ${env.BUILD_URL}artifact
+                    """.stripIndent()
+
+                    mail body: emailBodyTemplate, subject: emailSubject, to: params.EMAIL_LIST
+                }
+
+                color = [SUCCESS: "good",
+                         FAILURE: "danger"]
+                        .get(currentBuild.currentResult, "warning")
+
+
+                // Send notification to slack
+                slackSend (message: "${env.JOB_NAME} ${env.BUILD_NUMBER} - ${currentBuild.result}\n${env.BUILD_URL}console\n",
+                           channel: 'jenkins_notifications',
+                           teamDomain: 'hpe-internal',
+                           tokenCredentialId: 'slack-notificaitons',
+                           color: "${color}",
+                           iconEmoji: ':hpe-bot')
+
+            }
+        }
+    }
+}

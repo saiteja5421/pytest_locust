@@ -1,0 +1,71 @@
+/**
+ * (C) Copyright 2022 Hewlett Packard Enterprise Development LP
+ *
+ * Build pipeline for "qa-automation" Medusa repo
+ */
+
+def getHarborRegistry(){
+    ( harborRegistry, unused ) = getHarborPushRegistryAndCred()
+    return harborRegistry
+}
+
+pipeline {
+    agent {
+        kubernetes {
+            inheritFrom 'ccs-dev'
+            defaultContainer 'ccs-dev'
+        }
+    }
+
+    options {
+        // keep last 10 builds
+        buildDiscarder(
+            logRotator(numToKeepStr: '10')
+        )
+
+        timestamps()
+    }
+
+    environment {
+        PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        HTTPS_PROXY = "${PROXY}"
+        HTTP_PROXY = "${PROXY}"
+        NO_PROXY    = '127.0.0.1,localhost,0.0.0.0,.nimblestorage.com,10.0.0.0/8,cloud-objectstore-manager-grpc,ccs-pg,ccs-localstack'
+        https_proxy = "${PROXY}"
+        http_proxy = "${PROXY}"
+        no_proxy  = "${NO_PROXY}"
+    }
+
+    stages {
+        stage('Build Medusa Docker Image - Backup and Recovery') {
+            agent {
+                kubernetes {
+                    cloud 'sc-jenkins-k8s'
+                    inheritFrom 'k8s-dind'
+                }
+            }
+            steps {
+                container('docker-daemon') {
+                    script {
+                        dir("${env.WORKSPACE}/Medusa") {
+                            git credentialsId: 'nimble-dcs-org', branch: "master", url: 'https://github.hpe.com/nimble/qa_automation.git'
+                            def ( harborPushRegistry, harborPushCred ) = getHarborPushRegistryAndCred()
+                            def testImageTag = "${env.HARBOR_HOST}/sc-jenkins-preprod/medusa-backup-and-recovery"
+                            def testImage
+                            def proxyBuildArgs = "--build-arg HTTP_PROXY='${env.HTTP_PROXY}' --build-arg HTTPS_PROXY='${env.HTTPS_PROXY}' --build-arg NO_PROXY='${env.NO_PROXY}' --build-arg http_proxy=${HTTP_PROXY} --build-arg https_proxy=${HTTPS_PROXY} --build-arg no_proxy=${env.NO_PROXY}"
+
+                            docker.withRegistry(env.CDS_HARBOR_REGISTRY) {
+                                testImage = docker.build(testImageTag, "${proxyBuildArgs} -f Medusa/medusa_backup_and_recovery.Dockerfile Medusa")
+                            }
+
+                            docker.withRegistry(env.CDS_HARBOR_REGISTRY, harborPushCred) {
+                                def pushTag = "latest"
+                                testImage.push(pushTag)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

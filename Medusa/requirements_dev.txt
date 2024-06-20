@@ -1,0 +1,13 @@
+--index-url https://pypi.org/simple
+black
+autoflake
+flake8
+mkdocs
+mkdocs-autorefs
+mkdocs-gen-files
+mkdocs-literate-nav
+mkdocs-material
+mkdocs-material-extensions
+mkdocs-section-index
+mkdocstrings
+mkdocstrings-python

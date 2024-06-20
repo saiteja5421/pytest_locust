@@ -1,0 +1,50 @@
+pipeline 
+{
+    agent 
+    {
+        label 'gate-check'
+    }
+    
+    options {
+        timestamps()
+        buildDiscarder logRotator(artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '20',
+                daysToKeepStr: '',
+                numToKeepStr: '20')
+    }
+
+    environment {
+        REPO_NAME = 'qa_automation'
+        HTTPS_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        HTTP_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        NO_PROXY = '127.0.0.1,localhost,.nimblestorage.com,10.0.0.0/8'
+    }
+
+    stages 
+    {
+        stage('Generate Medusa Documentation') 
+        {
+            steps 
+            {
+                git branch: "master", credentialsId: 'ruben_personal_token', url: 'https://github.hpe.com/nimble/qa_automation.git'
+                withCredentials([gitUsernamePassword(credentialsId: 'ruben_personal_token', gitToolName: 'git-tool')]) {
+                    sh """
+                        cd $WORKSPACE/Medusa/
+                        echo "Generate Medusa documetation"
+                        pip3 install -r requirements_dev.txt
+                        mkdocs gh-deploy --force
+                    """
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                cleanWs()
+            }
+        }
+    }
+}
+
+

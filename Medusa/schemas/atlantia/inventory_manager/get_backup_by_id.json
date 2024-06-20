@@ -1,0 +1,362 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "accountId": "9b4c14a6-3cd5-4907-97c4-cf44c5b641e4",
+            "assetId": "1b4c14a6-3cd5-4907-97c4-cf44c5b641e4",
+            "backupMode": "FULL",
+            "backupType": "BACKUP",
+            "consistency": "CRASHCONSISTENT",
+            "createdAt": "2020-03-03T05:03:08.902Z",
+            "createdByInfo": {
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "name": "string"
+            },
+            "customerId": "string",
+            "description": "string",
+            "expiresAt": "1970-01-01T00:00:00.000Z",
+            "generation": 0,
+            "id": "string",
+            "lockedUntil": "2020-04-03T05:03:08.900Z",
+            "name": "string",
+            "resourceUri": "string",
+            "scheduleInfo": {
+                "jobId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "name": "Hourly snapshot schedule",
+                "protectionGroupId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "recurrence": "ByMinutes",
+                "scheduleId": 0
+            },
+            "state": "OK",
+            "stateReason": "string",
+            "status": "OK",
+            "updatedAt": "1970-01-01T00:00:00.000Z"
+        }
+    ],
+    "required": [
+        "accountId",
+        "assetId",
+        "backupMode",
+        "backupType",
+        "consistency",
+        "createdAt",
+        "createdByInfo",
+        "customerId",
+        "description",
+        "expiresAt",
+        "generation",
+        "id",
+        "lockedUntil",
+        "name",
+        "resourceUri",
+        "scheduleInfo",
+        "state",
+        "stateReason",
+        "status",
+        "updatedAt"
+    ],
+    "properties": {
+        "accountId": {
+            "$id": "#/properties/accountId",
+            "type": "string",
+            "title": "The accountId schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "9b4c14a6-3cd5-4907-97c4-cf44c5b641e4"
+            ]
+        },
+        "assetId": {
+            "$id": "#/properties/assetId",
+            "type": "string",
+            "title": "The assetId schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "1b4c14a6-3cd5-4907-97c4-cf44c5b641e4"
+            ]
+        },
+        "backupMode": {
+            "$id": "#/properties/backupMode",
+            "type": "string",
+            "title": "The backupMode schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "FULL"
+            ]
+        },
+        "backupType": {
+            "$id": "#/properties/backupType",
+            "type": "string",
+            "title": "The backupType schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "BACKUP"
+            ]
+        },
+        "consistency": {
+            "$id": "#/properties/consistency",
+            "type": "string",
+            "title": "The consistency schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "CRASHCONSISTENT"
+            ]
+        },
+        "createdAt": {
+            "$id": "#/properties/createdAt",
+            "type": "string",
+            "title": "The createdAt schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "2020-03-03T05:03:08.902Z"
+            ]
+        },
+        "createdByInfo": {
+            "$id": "#/properties/createdByInfo",
+            "type": "object",
+            "title": "The createdByInfo schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": {},
+            "examples": [
+                {
+                    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "name": "string"
+                }
+            ],
+            "required": [
+                "id",
+                "name"
+            ],
+            "properties": {
+                "id": {
+                    "$id": "#/properties/createdByInfo/properties/id",
+                    "type": "string",
+                    "title": "The id schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    ]
+                },
+                "name": {
+                    "$id": "#/properties/createdByInfo/properties/name",
+                    "type": "string",
+                    "title": "The name schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "string"
+                    ]
+                }
+            },
+            "additionalProperties": true
+        },
+        "customerId": {
+            "$id": "#/properties/customerId",
+            "type": "string",
+            "title": "The customerId schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "description": {
+            "$id": "#/properties/description",
+            "type": "string",
+            "title": "The description schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "expiresAt": {
+            "$id": "#/properties/expiresAt",
+            "type": "string",
+            "title": "The expiresAt schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "1970-01-01T00:00:00.000Z"
+            ]
+        },
+        "generation": {
+            "$id": "#/properties/generation",
+            "type": "integer",
+            "title": "The generation schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "id": {
+            "$id": "#/properties/id",
+            "type": "string",
+            "title": "The id schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "lockedUntil": {
+            "$id": "#/properties/lockedUntil",
+            "type": "string",
+            "title": "The lockedUntil schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "2020-04-03T05:03:08.900Z"
+            ]
+        },
+        "name": {
+            "$id": "#/properties/name",
+            "type": "string",
+            "title": "The name schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "resourceUri": {
+            "$id": "#/properties/resourceUri",
+            "type": "string",
+            "title": "The resourceUri schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "scheduleInfo": {
+            "$id": "#/properties/scheduleInfo",
+            "type": "object",
+            "title": "The scheduleInfo schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": {},
+            "examples": [
+                {
+                    "jobId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "name": "Hourly snapshot schedule",
+                    "protectionGroupId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "recurrence": "ByMinutes",
+                    "scheduleId": 0
+                }
+            ],
+            "required": [
+                "jobId",
+                "name",
+                "protectionGroupId",
+                "recurrence",
+                "scheduleId"
+            ],
+            "properties": {
+                "jobId": {
+                    "$id": "#/properties/scheduleInfo/properties/jobId",
+                    "type": "string",
+                    "title": "The jobId schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    ]
+                },
+                "name": {
+                    "$id": "#/properties/scheduleInfo/properties/name",
+                    "type": "string",
+                    "title": "The name schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "Hourly snapshot schedule"
+                    ]
+                },
+                "protectionGroupId": {
+                    "$id": "#/properties/scheduleInfo/properties/protectionGroupId",
+                    "type": "string",
+                    "title": "The protectionGroupId schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    ]
+                },
+                "recurrence": {
+                    "$id": "#/properties/scheduleInfo/properties/recurrence",
+                    "type": "string",
+                    "title": "The recurrence schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "ByMinutes"
+                    ]
+                },
+                "scheduleId": {
+                    "$id": "#/properties/scheduleInfo/properties/scheduleId",
+                    "type": "integer",
+                    "title": "The scheduleId schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": 0,
+                    "examples": [
+                        0
+                    ]
+                }
+            },
+            "additionalProperties": true
+        },
+        "state": {
+            "$id": "#/properties/state",
+            "type": "string",
+            "title": "The state schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "OK"
+            ]
+        },
+        "stateReason": {
+            "$id": "#/properties/stateReason",
+            "type": "string",
+            "title": "The stateReason schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "status": {
+            "$id": "#/properties/status",
+            "type": "string",
+            "title": "The status schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "OK"
+            ]
+        },
+        "updatedAt": {
+            "$id": "#/properties/updatedAt",
+            "type": "string",
+            "title": "The updatedAt schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "1970-01-01T00:00:00.000Z"
+            ]
+        }
+    },
+    "additionalProperties": true
+}

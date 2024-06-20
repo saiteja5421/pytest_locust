@@ -1,0 +1,172 @@
+pipeline {
+    agent {
+        label 'PQA-JENKINS'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder logRotator(artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '7',
+                daysToKeepStr: '',
+                numToKeepStr: '7')
+        skipDefaultCheckout()
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+         string(defaultValue: 'master',
+                description: 'Default value is master, type your branch name if you want to run build on specific branch',
+                name: 'BRANCH_NAME',
+                trim: true)
+        booleanParam(defaultValue: true,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: 'DSE-DataObservability-PQA <DSE-DataObservability-PQA@hpe.com>',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Report Portal flag',
+                name: 'ENABLE_REPORT_PORTAL')
+        
+    }
+
+    environment {
+        CONTAINER_NAME = "datapanorama"
+    }
+
+    stages {
+        stage('Checkout Repository') {
+            steps {
+                cleanWs()
+                sh "echo Checkout ${params.BRANCH_NAME} Branch"
+                git branch: "${params.BRANCH_NAME}", credentialsId: 'SAM_GIT_TOKEN', url: 'https://github.hpe.com/nimble/qa_automation.git'
+            }
+        }
+        stage('Run data panorama Test') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        def retryCount = 3
+                        def retryDelay = 10
+                        def retryAttempts = 0
+
+                        while (retryAttempts < retryCount) {
+                            try {
+                                sh "ls $WORKSPACE/Medusa"
+                                def command = "docker run --dns='10.239.73.22' --dns='10.35.0.1' --dns='10.241.25.161' -w /Medusa --name ${env.CONTAINER_NAME} --pull always -v $WORKSPACE/Medusa:/Medusa hub.docker.hpecorp.net/atlas-qa/data_panorama python -m pytest -W ignore::DeprecationWarning -v --html=report.html --self-contained-html --capture=sys --tb=short --junitxml=test-results.xml --ignore=tests/data_panaroma/data_creation_for_ui_tests"
+                                if (params.ENABLE_REPORT_PORTAL) {
+                                    sh "${command} -c tests/data_panaroma/pytest.alltests.ini tests/data_panaroma/ --reportportal"
+                                } 
+                                else {
+                                    sh "${command} tests/data_panaroma/ "
+                                }
+                                retryAttempts = retryCount // If succeeds no need to retry so set retrycount equal to retryAttempts
+                            }
+                            catch(Exception e){
+                                // Check if the exception is a TLS handshake error then retry
+                                if (e.toString().contains('TLS handshake') && e.toString().contains('docker')) {
+                                    echo "TLS handshake error occurred in docker. Retrying in ${retryDelay} seconds..."
+                                    sleep retryDelay
+                                    retryAttempts++
+                                } else if (e.toString().contains('(Client.Timeout') && e.toString().contains('docker')) {
+                                    echo "Timeout error occurred in docker. Retrying in ${retryDelay} seconds..."
+                                    sleep retryDelay
+                                    retryAttempts++
+                                }
+                                    else {
+                                    // If it's not a TLS handshake error, exit the loop and fail the build
+                                    error "Error occurred: ${e}"
+                                    break
+                                }
+                            }
+                        }  
+                    }
+                }
+            }
+        }
+        stage('Zip') {
+            steps {
+                dir("$WORKSPACE/Medusa") {
+                    sh '''
+                    zip -r  response_json.zip out
+                    '''
+               }
+            }
+        }
+    }
+        
+    post {
+        always {
+            script {
+                if (params.SEND_EMAILS) {
+                    def junitResult = junit '**/test-results.xml'
+
+                    def summary = "Total: ${junitResult.totalCount}, Failures: ${junitResult.failCount}, Skipped: ${junitResult.skipCount}, Passed: ${junitResult.passCount}"
+                    def emailSubject = "${env.JOB_NAME} ${env.BUILD_NUMBER} - Status  ${summary}"
+                    def emailBodyTemplate = """
+                    Test Summary: ${summary}
+                    
+                    Build ran on branch: ${params.BRANCH_NAME}
+                    Are logs on Report Portal?: ${params.ENABLE_REPORT_PORTAL}
+                    Report portal link: http://10.239.73.26:8085/ui/
+
+                    Link to build: ${env.BUILD_URL}
+                    Link to console: ${env.BUILD_URL}console
+                    ------------------
+                    """.stripIndent()
+
+                    //emailBodyTemplate += summary
+
+                    // mail body: emailBodyTemplate, subject: emailSubject, to: params.EMAIL_LIST
+                    
+                    emailext (
+                        attachmentsPattern: "**/report.html,**/response_json.zip", 
+                        body: emailBodyTemplate, 
+                        subject: emailSubject, 
+                        mimeType: 'text/html',
+                        to: params.EMAIL_LIST
+                    )
+                }
+                
+                try {
+                    echo "Attempting to stop ${env.CONTAINER_NAME} container:"
+                    sh "docker stop ${env.CONTAINER_NAME}"
+                    echo "${env.CONTAINER_NAME} stopped."
+                } catch (err) {
+                    echo "Container ${env.CONTAINER_NAME} is not running."
+                }
+                
+                try {
+                    echo "Attempting to remove ${env.CONTAINER_NAME} container:"
+                    sh "docker rm ${env.CONTAINER_NAME}"
+                    echo "${env.CONTAINER_NAME} removed."
+                } catch (err) {
+                    echo "Container ${env.CONTAINER_NAME} does not exist."
+                }
+
+                try {
+                    echo "Attempting to remove dangling images using 'docker image prune -f'"
+                    sh "docker image prune -f"
+                    echo "Removed dangling images"
+                } catch (err) {
+                    echo "Failed to remove dangling images from the system"
+                }
+
+                cleanWs()
+
+                color = [SUCCESS: "good",
+                         FAILURE: "danger"]
+                        .get(currentBuild.currentResult, "warning")
+
+
+                // Send notification to slack
+                slackSend (message: "${env.JOB_NAME} ${env.BUILD_NUMBER} - ${currentBuild.result}\n${env.BUILD_URL}console\n${testResults}",
+                          channel: 'data_observability_pqa_tests',
+                          teamDomain: 'hpe-internal',
+                          tokenCredentialId: 'slack-notificaitons',
+                          color: "${color}",
+                          iconEmoji: ':hpe-bot')
+            }
+        }
+    }
+}

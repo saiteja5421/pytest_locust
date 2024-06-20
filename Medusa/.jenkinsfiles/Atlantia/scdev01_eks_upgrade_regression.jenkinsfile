@@ -1,0 +1,176 @@
+pipeline {
+    agent {
+        label 'eks-pqa-jenkins'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder logRotator(artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '20',
+                daysToKeepStr: '',
+                numToKeepStr: '20')
+        skipDefaultCheckout()
+        disableConcurrentBuilds()
+    }
+
+    triggers {
+        cron 'H 10 * * *'
+    }
+
+    parameters {
+        string(defaultValue: 'master',
+                description: 'Default value is master, type your branch name if you want to run build on specific branch',
+                name: 'BRANCH_NAME',
+                trim: true)
+        booleanParam(defaultValue: true,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: 'eks-pqa@hpe.com',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Report Portal flag',
+                name: 'ENABLE_REPORT_PORTAL')
+    }
+
+    environment {
+        CONTAINER_NAME = "eks_upgrade_regression_scdev01"
+    }
+
+    stages {
+        stage('Checkout Repository') {
+            steps {
+                //git branch: "${params.BRANCH_NAME}", credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/qa_automation.git'
+                checkout(
+                            [$class: 'GitSCM',
+                            branches: [[name: "${params.BRANCH_NAME}"]],
+                            extensions: [checkoutOption(30)],
+                            userRemoteConfigs: [[credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/qa_automation.git']]]
+                        )
+            }
+        }
+        stage("Update Client and Secret IDs") {
+            steps {
+                script {
+                    // Get secret id for all users from Jenkins using client id stored as credentialId
+                    // Secret text format <client id>,<secret id>
+                    withCredentials([string(credentialsId: 'EKS_SCDEV01_USER_ONE', variable: 'USER_ONE_CRED'), string(credentialsId: 'EKS_SCDEV01_USER_TWO', variable: 'USER_TWO_CRED')]) {
+                        // Execute Python script to update the client and secret ids in the config file
+                        sh '''
+                            python3 $WORKSPACE/Medusa/utils/update_config_file.py variables_eks_upgrade_regression_scdev01.ini admin $USER_ONE_CRED $USER_TWO_CRED
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Copy Credentials') 
+        {
+            steps
+            {
+                withCredentials([file(credentialsId: 'EKS_UPGRADE_REG_CREDS', variable: 'UPGRADE_REG_CREDS')]) {
+                sh '''
+                cp $UPGRADE_REG_CREDS $WORKSPACE/Medusa/.env
+                chmod +x $WORKSPACE/Medusa/.env
+                '''
+                }
+
+            }
+        }
+        stage('Run Upgrade Regression Tests') {
+            steps {
+                script {
+                    sh "ls $WORKSPACE"
+                    withCredentials([string(credentialsId: 'RP_API_KEY', variable: 'RP_API_KEY')]) {
+                        def command = "docker run -w /Medusa --name ${env.CONTAINER_NAME} --pull always --env-file $WORKSPACE/Medusa/.env -e RP_API_KEY=$RP_API_KEY -e SERVICE_VERSION='service2' -e CONFIG_FILE='variables_eks_upgrade_regression_scdev01' -v $WORKSPACE/Medusa:/Medusa hub.docker.hpecorp.net/atlas-qa/eks-regression pytest -sv -m eks_regression_upgrade -c configs/atlantia/pytest/pytest_eks_upgrade_regression_scdev01.ini --junitxml=logs/junit.xml"
+                        if (params.ENABLE_REPORT_PORTAL) {
+                            sh "${command} --reportportal /Medusa/tests/e2e/aws_protection/test_regression/eks/eks_cluster_upgrade"
+                        } else {
+                            sh "${command} /Medusa/tests/e2e/aws_protection/test_regression/eks/eks_cluster_upgrade"
+                        }
+                    }
+                }   
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                try {
+                    echo "Attempting to stop ${env.CONTAINER_NAME} container:"
+                    sh "docker stop ${env.CONTAINER_NAME}"
+                    echo "${env.CONTAINER_NAME} stopped."
+                } catch (err) {
+                    echo "Container ${env.CONTAINER_NAME} is not running."
+                }
+
+                try {
+                    echo "Attempting to extract test logs from ${env.CONTAINER_NAME} container:"
+                    sh "docker cp ${env.CONTAINER_NAME}:/Medusa/logs/test_run.log ${WORKSPACE}/${env.BUILD_NUMBER}_test_run.log"
+                    archiveArtifacts artifacts: "${env.BUILD_NUMBER}_test_run.log", followSymlinks: false
+                } catch (err) {
+                    echo "Logs are not present in container ${env.CONTAINER_NAME}, unable to export artifact."
+                }
+
+                def testResults = ""
+
+                try {
+                    echo "Attempting to extract junit xml report from ${env.CONTAINER_NAME} container:"
+                    sh "docker cp ${env.CONTAINER_NAME}:/Medusa/logs/junit.xml ${WORKSPACE}/${env.BUILD_NUMBER}_junit.xml"
+                    def summary = junit allowEmptyResults: true, healthScaleFactor: 0.0, skipPublishingChecks: true, testResults: "${env.BUILD_NUMBER}_junit.xml"
+                    testResults = "\n\nTest Summary\n---\nTotal: ${summary.totalCount}\nPassed: ${summary.passCount}\nFailures: ${summary.failCount}\nSkipped: ${summary.skipCount}"
+                } catch  (err) {
+                    echo "XML test report is not present in container ${env.CONTAINER_NAME}, unable to extract results."
+                }
+
+                try {
+                    echo "Attempting to remove ${env.CONTAINER_NAME} container:"
+                    sh "docker rm ${env.CONTAINER_NAME}"
+                    echo "${env.CONTAINER_NAME} removed."
+                } catch (err) {
+                    echo "Container ${env.CONTAINER_NAME} does not exist."
+                }
+
+                try {
+                    echo "Attempting to remove dangling images using 'docker image prune -f'"
+                    sh "docker image prune -f"
+                    echo "Removed dangling images"
+                } catch (err) {
+                    echo "Failed to remove dangling images from the system"
+                }
+
+                cleanWs()
+
+                if (params.SEND_EMAILS) {
+                    def emailSubject = "${env.JOB_NAME} ${env.BUILD_NUMBER} - Status ${currentBuild.result}"
+                    def emailBodyTemplate = """
+                    Build ran on branch: ${params.BRANCH_NAME}
+                    Are logs on Report Portal?: ${params.ENABLE_REPORT_PORTAL}
+
+                    Link to build: ${env.BUILD_URL}
+                    Link to console: ${env.BUILD_URL}console
+                    Link to artifact: ${env.BUILD_URL}artifact
+                    """.stripIndent()
+
+                    emailBodyTemplate += testResults
+
+                    mail body: emailBodyTemplate, subject: emailSubject, to: params.EMAIL_LIST
+                }
+
+                color = [SUCCESS: "good",
+                         FAILURE: "danger"]
+                        .get(currentBuild.currentResult, "warning")
+
+
+                // Send notification to slack
+                slackSend (message: "${env.JOB_NAME} ${env.BUILD_NUMBER} - ${currentBuild.result}\n${env.BUILD_URL}console\n${testResults}",
+                           channel: 'jenkins_notifications',
+                           teamDomain: 'hpe-internal',
+                           tokenCredentialId: 'slack-notificaitons',
+                           color: "${color}",
+                           iconEmoji: ':hpe-bot')
+
+            }
+        }
+    }
+}

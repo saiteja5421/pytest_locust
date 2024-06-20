@@ -1,0 +1,1 @@
+Standard asset folder has stand alone scripts

@@ -1,0 +1,869 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "customerId": "string",
+            "generation": 0,
+            "id": "string",
+            "name": "string",
+            "resourceUri": "string",
+            "type": "string",
+            "accountId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+            "backupInfo": [
+                {
+                    "count": 5,
+                    "type": "SNAPSHOT"
+                }
+            ],
+            "cspInfo": {
+                "availabilityZone": "string",
+                "createdAt": "1970-01-01T00:00:00.000Z",
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "isEncrypted": false,
+                "region": "string",
+                "sizeInGiB": 0,
+                "tags": [
+                    {
+                        "key": "string",
+                        "value": "string"
+                    }
+                ],
+                "type": "string"
+            },
+            "machineInstanceAttachmentInfo": [
+                {
+                    "attachedAt": "1970-01-01T00:00:00.000Z",
+                    "attachedTo": {
+                        "name": "string",
+                        "resourceUri": "string",
+                        "type": "string"
+                    },
+                    "deleteOnTermination": false,
+                    "device": "string",
+                    "state": "UNKNOWN"
+                }
+            ],
+            "protectionGroupInfo": [
+                {
+                    "name": "string",
+                    "resourceUri": "string",
+                    "type": "string"
+                }
+            ],
+            "protectionJobInfo": [
+                {
+                    "assetType": "CSP_PROTECTION_GROUP",
+                    "protectionPolicyInfo": {
+                        "name": "string",
+                        "resourceUri": "string",
+                        "type": "string"
+                    },
+                    "resourceUri": "string",
+                    "scheduleInfo": [
+                        {
+                            "id": 0,
+                            "status": "NOT_RUN",
+                            "updatedAt": "1970-01-01T00:00:00.000Z"
+                        }
+                    ],
+                    "type": "string"
+                }
+            ],
+            "protectionStatus": "NONE",
+            "state": "OK"
+        }
+    ],
+    "required": [
+        "customerId",
+        "generation",
+        "id",
+        "name",
+        "resourceUri",
+        "type",
+        "accountId",
+        "backupInfo",
+        "cspInfo",
+        "machineInstanceAttachmentInfo",
+        "protectionGroupInfo",
+        "protectionJobInfo",
+        "protectionStatus",
+        "state"
+    ],
+    "properties": {
+        "customerId": {
+            "$id": "#/properties/customerId",
+            "type": "string",
+            "title": "The customerId schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "generation": {
+            "$id": "#/properties/generation",
+            "type": "integer",
+            "title": "The generation schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "id": {
+            "$id": "#/properties/id",
+            "type": "string",
+            "title": "The id schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "name": {
+            "$id": "#/properties/name",
+            "type": "string",
+            "title": "The name schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "resourceUri": {
+            "$id": "#/properties/resourceUri",
+            "type": "string",
+            "title": "The resourceUri schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "type": {
+            "$id": "#/properties/type",
+            "type": "string",
+            "title": "The type schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "accountId": {
+            "$id": "#/properties/accountId",
+            "type": "string",
+            "title": "The accountId schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            ]
+        },
+        "backupInfo": {
+            "$id": "#/properties/backupInfo",
+            "type": "array",
+            "title": "The backupInfo schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "count": 5,
+                        "type": "SNAPSHOT"
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/backupInfo/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/backupInfo/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "count": 5,
+                                "type": "SNAPSHOT"
+                            }
+                        ],
+                        "required": [
+                            "count",
+                            "type"
+                        ],
+                        "properties": {
+                            "count": {
+                                "$id": "#/properties/backupInfo/items/anyOf/0/properties/count",
+                                "type": "integer",
+                                "title": "The count schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": 0,
+                                "examples": [
+                                    5
+                                ]
+                            },
+                            "type": {
+                                "$id": "#/properties/backupInfo/items/anyOf/0/properties/type",
+                                "type": "string",
+                                "title": "The type schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "SNAPSHOT"
+                                ]
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                ]
+            }
+        },
+        "cspInfo": {
+            "$id": "#/properties/cspInfo",
+            "type": "object",
+            "title": "The cspInfo schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": {},
+            "examples": [
+                {
+                    "availabilityZone": "string",
+                    "createdAt": "1970-01-01T00:00:00.000Z",
+                    "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "isEncrypted": false,
+                    "region": "string",
+                    "sizeInGiB": 0,
+                    "tags": [
+                        {
+                            "key": "string",
+                            "value": "string"
+                        }
+                    ],
+                    "type": "string"
+                }
+            ],
+            "required": [
+                "availabilityZone",
+                "createdAt",
+                "id",
+                "isEncrypted",
+                "region",
+                "sizeInGiB",
+                "tags",
+                "type"
+            ],
+            "properties": {
+                "availabilityZone": {
+                    "$id": "#/properties/cspInfo/properties/availabilityZone",
+                    "type": "string",
+                    "title": "The availabilityZone schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "string"
+                    ]
+                },
+                "createdAt": {
+                    "$id": "#/properties/cspInfo/properties/createdAt",
+                    "type": "string",
+                    "title": "The createdAt schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "1970-01-01T00:00:00.000Z"
+                    ]
+                },
+                "id": {
+                    "$id": "#/properties/cspInfo/properties/id",
+                    "type": "string",
+                    "title": "The id schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    ]
+                },
+                "isEncrypted": {
+                    "$id": "#/properties/cspInfo/properties/isEncrypted",
+                    "type": "boolean",
+                    "title": "The isEncrypted schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": false,
+                    "examples": [
+                        false
+                    ]
+                },
+                "region": {
+                    "$id": "#/properties/cspInfo/properties/region",
+                    "type": "string",
+                    "title": "The region schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "string"
+                    ]
+                },
+                "sizeInGiB": {
+                    "$id": "#/properties/cspInfo/properties/sizeInGiB",
+                    "type": "integer",
+                    "title": "The sizeInGiB schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": 0,
+                    "examples": [
+                        0
+                    ]
+                },
+                "tags": {
+                    "$id": "#/properties/cspInfo/properties/tags",
+                    "type": "array",
+                    "title": "The tags schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": [],
+                    "examples": [
+                        [
+                            {
+                                "key": "string",
+                                "value": "string"
+                            }
+                        ]
+                    ],
+                    "additionalItems": true,
+                    "items": {
+                        "$id": "#/properties/cspInfo/properties/tags/items",
+                        "anyOf": [
+                            {
+                                "$id": "#/properties/cspInfo/properties/tags/items/anyOf/0",
+                                "type": "object",
+                                "title": "The first anyOf schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": {},
+                                "examples": [
+                                    {
+                                        "key": "string",
+                                        "value": "string"
+                                    }
+                                ],
+                                "required": [
+                                    "key",
+                                    "value"
+                                ],
+                                "properties": {
+                                    "key": {
+                                        "$id": "#/properties/cspInfo/properties/tags/items/anyOf/0/properties/key",
+                                        "type": "string",
+                                        "title": "The key schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "string"
+                                        ]
+                                    },
+                                    "value": {
+                                        "$id": "#/properties/cspInfo/properties/tags/items/anyOf/0/properties/value",
+                                        "type": "string",
+                                        "title": "The value schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "string"
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": true
+                            }
+                        ]
+                    }
+                },
+                "type": {
+                    "$id": "#/properties/cspInfo/properties/type",
+                    "type": "string",
+                    "title": "The type schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "string"
+                    ]
+                }
+            },
+            "additionalProperties": true
+        },
+        "machineInstanceAttachmentInfo": {
+            "$id": "#/properties/machineInstanceAttachmentInfo",
+            "type": "array",
+            "title": "The machineInstanceAttachmentInfo schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "attachedAt": "1970-01-01T00:00:00.000Z",
+                        "attachedTo": {
+                            "name": "string",
+                            "resourceUri": "string",
+                            "type": "string"
+                        },
+                        "deleteOnTermination": false,
+                        "device": "string",
+                        "state": "UNKNOWN"
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/machineInstanceAttachmentInfo/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/machineInstanceAttachmentInfo/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "attachedAt": "1970-01-01T00:00:00.000Z",
+                                "attachedTo": {
+                                    "name": "string",
+                                    "resourceUri": "string",
+                                    "type": "string"
+                                },
+                                "deleteOnTermination": false,
+                                "device": "string",
+                                "state": "UNKNOWN"
+                            }
+                        ],
+                        "required": [
+                            "attachedAt",
+                            "attachedTo",
+                            "deleteOnTermination",
+                            "device",
+                            "state"
+                        ],
+                        "properties": {
+                            "attachedAt": {
+                                "$id": "#/properties/machineInstanceAttachmentInfo/items/anyOf/0/properties/attachedAt",
+                                "type": "string",
+                                "title": "The attachedAt schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "1970-01-01T00:00:00.000Z"
+                                ]
+                            },
+                            "attachedTo": {
+                                "$id": "#/properties/machineInstanceAttachmentInfo/items/anyOf/0/properties/attachedTo",
+                                "type": "object",
+                                "title": "The attachedTo schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": {},
+                                "examples": [
+                                    {
+                                        "name": "string",
+                                        "resourceUri": "string",
+                                        "type": "string"
+                                    }
+                                ],
+                                "required": [
+                                    "name",
+                                    "resourceUri",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "$id": "#/properties/machineInstanceAttachmentInfo/items/anyOf/0/properties/attachedTo/properties/name",
+                                        "type": "string",
+                                        "title": "The name schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "string"
+                                        ]
+                                    },
+                                    "resourceUri": {
+                                        "$id": "#/properties/machineInstanceAttachmentInfo/items/anyOf/0/properties/attachedTo/properties/resourceUri",
+                                        "type": "string",
+                                        "title": "The resourceUri schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "string"
+                                        ]
+                                    },
+                                    "type": {
+                                        "$id": "#/properties/machineInstanceAttachmentInfo/items/anyOf/0/properties/attachedTo/properties/type",
+                                        "type": "string",
+                                        "title": "The type schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "string"
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": true
+                            },
+                            "deleteOnTermination": {
+                                "$id": "#/properties/machineInstanceAttachmentInfo/items/anyOf/0/properties/deleteOnTermination",
+                                "type": "boolean",
+                                "title": "The deleteOnTermination schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": false,
+                                "examples": [
+                                    false
+                                ]
+                            },
+                            "device": {
+                                "$id": "#/properties/machineInstanceAttachmentInfo/items/anyOf/0/properties/device",
+                                "type": "string",
+                                "title": "The device schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "string"
+                                ]
+                            },
+                            "state": {
+                                "$id": "#/properties/machineInstanceAttachmentInfo/items/anyOf/0/properties/state",
+                                "type": "string",
+                                "title": "The state schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "UNKNOWN"
+                                ]
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                ]
+            }
+        },
+        "protectionGroupInfo": {
+            "$id": "#/properties/protectionGroupInfo",
+            "type": "array",
+            "title": "The protectionGroupInfo schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "name": "string",
+                        "resourceUri": "string",
+                        "type": "string"
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/protectionGroupInfo/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/protectionGroupInfo/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "name": "string",
+                                "resourceUri": "string",
+                                "type": "string"
+                            }
+                        ],
+                        "required": [
+                            "name",
+                            "resourceUri",
+                            "type"
+                        ],
+                        "properties": {
+                            "name": {
+                                "$id": "#/properties/protectionGroupInfo/items/anyOf/0/properties/name",
+                                "type": "string",
+                                "title": "The name schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "string"
+                                ]
+                            },
+                            "resourceUri": {
+                                "$id": "#/properties/protectionGroupInfo/items/anyOf/0/properties/resourceUri",
+                                "type": "string",
+                                "title": "The resourceUri schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "string"
+                                ]
+                            },
+                            "type": {
+                                "$id": "#/properties/protectionGroupInfo/items/anyOf/0/properties/type",
+                                "type": "string",
+                                "title": "The type schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "string"
+                                ]
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                ]
+            }
+        },
+        "protectionJobInfo": {
+            "$id": "#/properties/protectionJobInfo",
+            "type": "array",
+            "title": "The protectionJobInfo schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "assetType": "CSP_PROTECTION_GROUP",
+                        "protectionPolicyInfo": {
+                            "name": "string",
+                            "resourceUri": "string",
+                            "type": "string"
+                        },
+                        "resourceUri": "string",
+                        "scheduleInfo": [
+                            {
+                                "id": 0,
+                                "status": "NOT_RUN",
+                                "updatedAt": "1970-01-01T00:00:00.000Z"
+                            }
+                        ],
+                        "type": "string"
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/protectionJobInfo/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/protectionJobInfo/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "assetType": "CSP_PROTECTION_GROUP",
+                                "protectionPolicyInfo": {
+                                    "name": "string",
+                                    "resourceUri": "string",
+                                    "type": "string"
+                                },
+                                "resourceUri": "string",
+                                "scheduleInfo": [
+                                    {
+                                        "id": 0,
+                                        "status": "NOT_RUN",
+                                        "updatedAt": "1970-01-01T00:00:00.000Z"
+                                    }
+                                ],
+                                "type": "string"
+                            }
+                        ],
+                        "required": [
+                            "assetType",
+                            "protectionPolicyInfo",
+                            "resourceUri",
+                            "scheduleInfo",
+                            "type"
+                        ],
+                        "properties": {
+                            "assetType": {
+                                "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/assetType",
+                                "type": "string",
+                                "title": "The assetType schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "CSP_PROTECTION_GROUP"
+                                ]
+                            },
+                            "protectionPolicyInfo": {
+                                "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/protectionPolicyInfo",
+                                "type": "object",
+                                "title": "The protectionPolicyInfo schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": {},
+                                "examples": [
+                                    {
+                                        "name": "string",
+                                        "resourceUri": "string",
+                                        "type": "string"
+                                    }
+                                ],
+                                "required": [
+                                    "name",
+                                    "resourceUri",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/protectionPolicyInfo/properties/name",
+                                        "type": "string",
+                                        "title": "The name schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "string"
+                                        ]
+                                    },
+                                    "resourceUri": {
+                                        "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/protectionPolicyInfo/properties/resourceUri",
+                                        "type": "string",
+                                        "title": "The resourceUri schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "string"
+                                        ]
+                                    },
+                                    "type": {
+                                        "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/protectionPolicyInfo/properties/type",
+                                        "type": "string",
+                                        "title": "The type schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "string"
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": true
+                            },
+                            "resourceUri": {
+                                "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/resourceUri",
+                                "type": "string",
+                                "title": "The resourceUri schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "string"
+                                ]
+                            },
+                            "scheduleInfo": {
+                                "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/scheduleInfo",
+                                "type": "array",
+                                "title": "The scheduleInfo schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": [],
+                                "examples": [
+                                    [
+                                        {
+                                            "id": 0,
+                                            "status": "NOT_RUN",
+                                            "updatedAt": "1970-01-01T00:00:00.000Z"
+                                        }
+                                    ]
+                                ],
+                                "additionalItems": true,
+                                "items": {
+                                    "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/scheduleInfo/items",
+                                    "anyOf": [
+                                        {
+                                            "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/scheduleInfo/items/anyOf/0",
+                                            "type": "object",
+                                            "title": "The first anyOf schema",
+                                            "description": "An explanation about the purpose of this instance.",
+                                            "default": {},
+                                            "examples": [
+                                                {
+                                                    "id": 0,
+                                                    "status": "NOT_RUN",
+                                                    "updatedAt": "1970-01-01T00:00:00.000Z"
+                                                }
+                                            ],
+                                            "required": [
+                                                "id",
+                                                "status",
+                                                "updatedAt"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/scheduleInfo/items/anyOf/0/properties/id",
+                                                    "type": "integer",
+                                                    "title": "The id schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": 0,
+                                                    "examples": [
+                                                        0
+                                                    ]
+                                                },
+                                                "status": {
+                                                    "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/scheduleInfo/items/anyOf/0/properties/status",
+                                                    "type": "string",
+                                                    "title": "The status schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": "",
+                                                    "examples": [
+                                                        "NOT_RUN"
+                                                    ]
+                                                },
+                                                "updatedAt": {
+                                                    "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/scheduleInfo/items/anyOf/0/properties/updatedAt",
+                                                    "type": "string",
+                                                    "title": "The updatedAt schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": "",
+                                                    "examples": [
+                                                        "1970-01-01T00:00:00.000Z"
+                                                    ]
+                                                }
+                                            },
+                                            "additionalProperties": true
+                                        }
+                                    ]
+                                }
+                            },
+                            "type": {
+                                "$id": "#/properties/protectionJobInfo/items/anyOf/0/properties/type",
+                                "type": "string",
+                                "title": "The type schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "string"
+                                ]
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                ]
+            }
+        },
+        "protectionStatus": {
+            "$id": "#/properties/protectionStatus",
+            "type": "string",
+            "title": "The protectionStatus schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "NONE"
+            ]
+        },
+        "state": {
+            "$id": "#/properties/state",
+            "type": "string",
+            "title": "The state schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "OK"
+            ]
+        }
+    },
+    "additionalProperties": true
+}

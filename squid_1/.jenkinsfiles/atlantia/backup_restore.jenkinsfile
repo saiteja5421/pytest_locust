@@ -1,0 +1,245 @@
+pipeline {
+    agent {
+        label 'PSR-Vaas-Agent'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder logRotator(artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '20',
+                daysToKeepStr: '',
+                numToKeepStr: '20')
+        skipDefaultCheckout()
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        string(defaultValue: 'main',
+                description: 'Default value is main, type your branch name if you want to run build on specific branch',
+                name: 'BRANCH_NAME',
+                trim: true)
+        booleanParam(defaultValue: false,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: 'vivek-vikas.baviskar@hpe.com, trey.guise@hpe.com, tata@hpe.com',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using grafana flag',
+                name: 'ENABLE_GRAFANA_REPORT')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Report Portal flag',
+                name: 'ENABLE_REPORT_PORTAL')
+        string(defaultValue: '--users=50 --run-time=35m',
+                description: 'Create backup workflow',
+                name: 'BACKUP_RUN_CONFIG',
+                trim: true)
+        string(defaultValue: '--users=50 --run-time=60m',
+                description: 'Restore instances from backup workflow ',
+                name: 'RESTORE_RUN_CONFIG',
+                trim: true)
+        string(defaultValue: '--users=10 --run-time=120m',
+                description: 'Create max VPCs, Subnets, Security Groups, EC2s, & Cloud Backups workflow',
+                name: 'MAX_RUN_CONFIG',
+                trim: true)
+    }
+
+    environment {
+        CONTAINER_NAME = "atlantia_psr_con"
+        IMAGE_NAME = "atlantia_psr"
+        GRAFANA_REPORT_CMD = "--timescale --grafana-url=http://172.21.109.179:8080 --pghost=172.21.109.179 --pguser=postgres --pgpassword=password"
+        PSR_ENV_FILE = credentials('SCDEV_SAM_ATLANPSR')
+        PARENT_DIR = "/workspaces/Squid"
+    }
+
+    stages {
+        stage('Checkout Repository') {
+            steps {
+                git branch: "${params.BRANCH_NAME}", credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/Squid.git'
+            }
+        }
+        stage('Copy .env file') 
+        {
+            steps
+            {
+                withCredentials([file(credentialsId: 'SCDEV_SAM_ATLANPSR', variable: 'environment')]) {
+                sh ''' 
+                cp $environment $WORKSPACE/.env
+                chmod +x $WORKSPACE/.env
+                '''
+                }
+            }
+        }
+        stage('Build Docker Image') 
+        {
+            steps
+            {
+                sh """ 
+                docker build --file Dockerfile --tag $IMAGE_NAME:v1.0 . 
+                echo "Grep or list the recently created Docker Images which has the 'atlantia' name in it"
+                docker images | grep $IMAGE_NAME
+                """
+            }
+        }
+        stage('Run docker container'){
+            steps {
+                script {
+                    def command = "docker run -w ${env.PARENT_DIR} --name ${env.CONTAINER_NAME} --env-file $PSR_ENV_FILE -e ENABLE_REPORT_PORTAL=${params.ENABLE_REPORT_PORTAL} -e LOCUST_HOST='https://scdev01-app.qa.cds.hpe.com' -e CONFIG_FILE_PATH=${env.PARENT_DIR}/config.yml -v $WORKSPACE:${env.PARENT_DIR} $IMAGE_NAME:v1.0 tail -f /dev/null&"
+                    sh "$command"
+                }
+            }
+        }
+        
+        stage('Run PSR- Restore Workflow Tests') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        sh "ls -lart $WORKSPACE"
+                        def command = "docker start ${env.CONTAINER_NAME} && docker exec ${env.CONTAINER_NAME} locust -f tests/aws/ec2/restore/workflow/test_dcs_1647_1646.py --config=tests/locust.conf --headless --only-summary"
+                        if (params.ENABLE_GRAFANA_REPORT) {
+                            sh "${command} ${params.RESTORE_RUN_CONFIG} ${env.GRAFANA_REPORT_CMD}"
+                        } 
+                        else {
+                             sh "${command} ${params.RESTORE_RUN_CONFIG}"
+                        }
+                    }
+                }
+            }
+        }
+        stage('Run PSR- Backup Workflow Tests') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        sh "ls -lart $WORKSPACE"
+                        def command = "docker start ${env.CONTAINER_NAME} && docker exec ${env.CONTAINER_NAME} locust -f tests/aws/backup/workflow/test_backup.py --config=tests/locust.conf --tag=local_backup --headless --only-summary"
+                        if (params.ENABLE_GRAFANA_REPORT) {
+                            sh "${command} ${params.BACKUP_RUN_CONFIG} ${env.GRAFANA_REPORT_CMD}"
+                        } 
+                        else {
+                            sh "${command} ${params.BACKUP_RUN_CONFIG}"
+                        }
+                    }
+                }
+            }
+        }
+        stage('Run PSR- Max VPCs, Subnets, Security Groups, EC2s, Cloud Backup Workflow') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        sh "ls -lart $WORKSPACE"
+                        def command = "docker start ${env.CONTAINER_NAME} && docker exec ${env.CONTAINER_NAME} locust -f tests/aws/max_vpc_subnet_security_group_ec2_cloud_backup/test_TC57482271.py --config=tests/locust.conf --tag=local_backup --headless --only-summary"
+                        if (params.ENABLE_GRAFANA_REPORT) {
+                            sh "${command} ${params.BACKUP_RUN_CONFIG} ${env.GRAFANA_REPORT_CMD}"
+                        } 
+                        else {
+                            sh "${command} ${params.BACKUP_RUN_CONFIG}"
+                        }
+                    }
+                }
+            }
+        }
+            
+        stage('Run PSR-Delete Ec2 instances') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        sh "ls -lart $WORKSPACE"
+                        def command = "docker start ${env.CONTAINER_NAME} && docker exec ${env.CONTAINER_NAME} python tests/aws/standard_asset/delete_ec2.py"
+                        sh "${command}"
+                        
+                    }
+                }
+            }
+        }
+
+        stage('Run PSR-Delete Ebs volumes') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        sh "ls -lart $WORKSPACE"
+                        def command = "docker start ${env.CONTAINER_NAME} && docker exec ${env.CONTAINER_NAME} python tests/aws/standard_asset/delete_ebs.py"
+                        sh "${command}"
+                        
+                    }
+                }
+            }
+        }
+
+        stage('Run PSR-cleanup csp instance backups') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        sh "ls -lart $WORKSPACE"
+                        def command = "docker start ${env.CONTAINER_NAME} && docker exec ${env.CONTAINER_NAME} python tests/aws/standard_asset/cleanup_backups_policies_protection_groups.py"
+                        sh "${command}"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                try {
+                    echo "Attempting to stop ${env.CONTAINER_NAME} container:"
+                    sh "docker stop ${env.CONTAINER_NAME}"
+                    echo "${env.CONTAINER_NAME} stopped."
+                } catch (err) {
+                    echo "Container ${env.CONTAINER_NAME} is not running."
+                }
+
+
+                def testResults = ""
+
+                
+                try {
+                    echo "Attempting to remove ${env.CONTAINER_NAME} container:"
+                    sh "docker rm ${env.CONTAINER_NAME}"
+                    echo "${env.CONTAINER_NAME} removed."
+                } catch (err) {
+                    echo "Container ${env.CONTAINER_NAME} does not exist."
+                }
+
+                try {
+                    echo "Attempting to remove dangling images using 'docker image prune -f'"
+                    sh "docker image prune -f"
+                    echo "Removed dangling images"
+                } catch (err) {
+                    echo "Failed to remove dangling images from the system"
+                }
+
+                cleanWs()
+
+                if (params.SEND_EMAILS) {
+                    def emailSubject = "${env.JOB_NAME} ${env.BUILD_NUMBER} - Status ${currentBuild.result}"
+                    def emailBodyTemplate = """
+                    Build ran on branch: ${params.BRANCH_NAME}
+                    Are logs on Report Portal?: ${params.ENABLE_GRAFANA_REPORT}
+
+                    Link to build: ${env.BUILD_URL}
+                    Link to console: ${env.BUILD_URL}console
+                    Link to artifact: ${env.BUILD_URL}artifact
+                    """.stripIndent()
+
+                    emailBodyTemplate += testResults
+
+                    mail body: emailBodyTemplate, subject: emailSubject, to: params.EMAIL_LIST
+                }
+
+                color = [SUCCESS: "good",
+                         FAILURE: "danger"]
+                        .get(currentBuild.currentResult, "warning")
+
+
+                // Send notification to slack
+                // slackSend (message: "${env.JOB_NAME} ${env.BUILD_NUMBER} - ${currentBuild.result}\n${env.BUILD_URL}console\n${testResults}",
+                //            channel: 'jenkins_notifications',
+                //            teamDomain: 'hpe-internal',
+                //            tokenCredentialId: 'slack-notificaitons',
+                //            color: "${color}",
+                //            iconEmoji: ':hpe-bot')
+
+            }
+        }
+    }
+}

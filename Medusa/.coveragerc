@@ -1,0 +1,5 @@
+[run]
+omit =
+	# Omit virtual environments
+	*/pypoetry/virtualenvs/*
+	*venv*

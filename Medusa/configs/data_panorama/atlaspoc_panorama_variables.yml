@@ -1,0 +1,90 @@
+# 'atlantia_url' and 'url' will be the same for sandbox
+# 'url' was added for local testing as ports for task service and other services differ.
+# We may not use the 'url' in this file but just added it for consistency sake.
+CLUSTER:
+  version: v1
+  atlantia_url: https://atlaspoc-app.qa.cds.hpe.com
+  url: http://pqa-backup-lb.pqaftc.hpe.com/data-observability/v1alpha1
+  oauth2_server: https://sso.common.cloud.hpe.com/as/token.oauth2
+  panorama_url: https://atlaspoc-app.qa.cds.hpe.com/data-observability/v1alpha1
+  static_token: ""
+
+GOLDENDB:
+  real_data: lib/dscc/data_panorama/data_collector/out/aggregateddb.sqlite
+  mock_data: tests/e2e/data_panorama/mock_data_generate/golden_db/ccs_pqa/mock_90_days.sqlite
+
+# USER_ONE, USER_TWO and USER_THREE all have Administrator rights: SCDEV01
+USER-ONE:
+  username: s3pqauser@gmail.com
+  credential_name: s3auto
+  api_client_id: 'enter api client'
+  api_client_secret: 'enter api secret'
+
+# 6k and 9k Array credentials
+6K-ARRAY-CREDENTIALS:
+  username: root
+  password: 'enter password'
+
+9K-ARRAY-CREDENTIALS:
+  username: root
+  password: 'enter password'
+
+# All PQA Array information
+ARRAY-INFO:
+
+  ftc-array158:
+    devtype: "6K"
+    os: nimble
+    arrayname: ftc-array158
+    arrayip: 10.235.79.1 
+    initiatorip: 10.235.79.1
+    initiatorgrpname: null
+    hostos: linux
+    hostname: linux
+    hostip: 10.239.73.203 
+    initiatoriqn: iqn.1994-05.com.redhat:4f9da4f4759c
+  s157:
+    devtype: "6K"
+    os: nimble
+    arrayname: xxxxxxxx
+    arrayip: 10.235.77.1
+    initiatorip: 10.235.77.12
+    initiatorgrpname: MedusaGroup
+    hostos: linux
+    hostname: linux
+    hostip: 10.235.77.12 
+    initiatoriqn: iqn.1998-01.com.vmware:localhost:664733944
+  s012:
+    devtype: "9K"
+    os: 3par
+    ip: 10.157.192.1
+    domain: cxo.storage.hpecorp.net
+    hostname: dl360eg8-118
+    hostip: 10.157.192.1
+    hostos: linux
+    hostwwns:
+    - 1000308D992FFBE9
+    - 1000308D992FFBE8
+    - 1000308D992FFBE8
+    - 1000308D992FFB94
+    - 1000308D992FFB95
+    - 1000308D992FFB94
+    - 1000308D992FFB95
+
+# PQA Array configuration
+ARRAY-CONFIG:
+  totalvolumescount: 0
+  thickvolumescount: Null
+  snapscountpervolume: Null
+
+# Proxy URI
+PROXY:
+  proxy_uri: http://web_proxy.corp.hpecorp.net:8080
+
+# This will only be used to create data for UI tests
+CX0_29_ARRAY:
+  array_ip: cxo-array29.lab.nimblestorage.com
+  username: admin
+  password: 'enter password'
+
+

@@ -1,0 +1,36 @@
+TEXT = "TestResult"
+
+def lines= manager.build.logFile.readLines()
+
+def result = lines.findAll {
+  it.contains(TEXT) && it.contains("=>")
+}
+def passcount = lines.findAll {
+  it.contains(TEXT) && it.contains("=> PASS")
+}
+def failcount = lines.findAll {
+  it.contains(TEXT) && it.contains("=> FAIL")
+}
+//manager.listener.logger.println result
+manager.listener.logger.println "================= Result Summary [Postbuild] ==============="
+manager.listener.logger.println "Total tests: ${result.size}"
+manager.listener.logger.println "Passed tests: ${passcount.size}"
+manager.listener.logger.println "Failed tests: ${failcount.size}"
+
+// Result for each iteration
+for (int i in 0..9) {
+  
+    def iterResult = result.findAll {
+      it.contains("Iteration ${i}")
+    }
+    def iterpasscount = iterResult.findAll {
+      it.contains(TEXT) && it.contains("=> PASS")
+    }
+    def iterfailcount = iterResult.findAll {
+      it.contains(TEXT) && it.contains("=> FAIL")
+    }
+    manager.listener.logger.println("Iteration ${i}, TOTAL => ${iterResult.size}, PASS => ${iterpasscount.size}, FAIL => ${iterfailcount.size}")
+    iterResult.each {
+      manager.listener.logger.println "\t" + it
+    }
+}

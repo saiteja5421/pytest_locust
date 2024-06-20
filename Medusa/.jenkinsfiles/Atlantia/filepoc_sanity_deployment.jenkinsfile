@@ -1,0 +1,667 @@
+@Library('sc-jenkins-pipeline-shared') _
+
+def suite_markers = ["ec2_ebs_sanity", "rds_sanity", "gfrs_sanity", "single_volume_sanity", "aclm_sanity_setup"]
+
+def date = new Date()
+DAY = date.format("EEEE")
+
+def generateSanityTestStage(mark_suite) {
+    return {
+        stage("Stage: ${mark_suite}") {
+            dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {	
+                withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        accessKeyVariable: 'ACCOUNT_ONE_AWS_KEY_ID',
+                        credentialsId: 'ACCOUNT_ONE_AWS_KEY_ID',
+                        secretKeyVariable: 'ACCOUNT_ONE_AWS_SECRET_KEY'
+                    ]]) {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        accessKeyVariable: 'ACCOUNT_TWO_AWS_KEY_ID',
+                        credentialsId: 'ACCOUNT_TWO_AWS_KEY_ID',
+                        secretKeyVariable: 'ACCOUNT_TWO_AWS_SECRET_KEY'
+                    ]]) {
+                    withCredentials([string(credentialsId: 'RP_API_KEY_2', variable: 'RP_API_KEY')]) {
+                        try {
+                            dir("${env.WORKSPACE}-${env.BUILD_NUMBER}/Medusa")
+                            {
+                                def rp_description = "'Atlantia FILEPOC B&R sanity build: ${env.BUILD_NUMBER}'"
+                                def command = "pytest -sv -m '${mark_suite} and validated' -c configs/atlantia/pytest/pytest_sanity.ini --log-file=logs/test_run_${mark_suite} --junitxml=logs/junit_${mark_suite}_${DAY}.xml"
+                                if (params.ENABLE_REPORT_PORTAL) {
+                                    sh "${command} --reportportal --rp-launch SANITY-FILEPOC_${mark_suite}_$DAY --rp-launch-description ${rp_description} tests/e2e/aws_protection/test_sanity"
+                                } else {
+                                    sh "${command} tests/e2e/aws_protection/test_sanity"
+                                }
+                            }
+                        } catch (Exception e) {
+                                echo "Error: ${e}"
+                        }
+                    }
+                    try {
+                        echo "Attempting to archive test log ${mark_suite}"
+                        archiveArtifacts artifacts: "Medusa/logs/test_run_${mark_suite}", followSymlinks: false
+                    } catch (Exception e) {
+                        echo "Logs are not present in container Medusa/logs/test_run_${mark_suite}, unable to export artifact."
+                        echo "Error: ${e}"
+                    }
+                    
+                    try {
+                        echo "Attempting to extract junit xml report from  Medusa/logs/junit_${mark_suite}_${DAY}.xml container:"
+                        def summary = junit allowEmptyResults: true, healthScaleFactor: 0.0, skipPublishingChecks: true, testResults: "Medusa/logs/junit_${mark_suite}_${DAY}.xml"
+                        currentBuild.description += "\n|${mark_suite.toUpperCase()} | Total: ${summary.totalCount} | Passed: ${summary.passCount} | Failures: ${summary.failCount} | Skipped: ${summary.skipCount} |"
+                    } catch  (Exception e) {
+                        echo "XML test report is not present in container, unable to extract results."
+                        echo "Error: ${e}"
+                    }
+                }
+                }
+            }
+        }
+    }
+}
+
+
+def clean_version_string(version_string) {
+    // There seems to be an issue with the version string, where there are extra \" characters.
+    // I believe the "tr -d" is meant to do some cleaning, but without "jq" on dcs-jenkins-cxo, did not investigate.
+    //
+    // In addition, string compares with versions such as "0.0.205-0-gbe06705" do not perform as desired,
+    // likely due to the last part starting with "-g"
+    // A recent run has csp-inventory on FILEPOC at "0.0.361-0-ge1b8bad3" and on SCDEV01 as "0.0.360-0-gff77c3fb",
+    // yet the deployment did not take place after all tests passed.
+    echo "cleaning version: ${version_string}"
+
+    // 0.0.205-0-gbe06705  -->  0.0.205  0  gbe06705
+    def values = version_string.split('-')
+
+    // we'll keep only the 1st and 2nd parts for numeric compare, indexing works
+    def part_1 = values[0]
+    def part_2 = values[1]
+    def part_3 = values[2]
+
+    // of the 1st part, let's trim off leading characters until we hit a digit (likely 0)
+    def index = 0
+    def length = part_1.length()
+    while (index < length && part_1[index].isNumber() == false) {
+        index++
+    }
+    def new_part_1 = part_1.substring(index, part_1.length())
+    echo "Final part_1 = ${new_part_1}"
+
+    // build and return new part_1 with -part_2
+    def final_version = "${new_part_1}-${part_2}"
+    echo "Final Version to return: ${final_version}"
+
+    // clean part_3 and return "version_tail", we want only alphanumeric characeters
+    index = 0
+    length = part_3.length()
+    while (index < length && part_3[index].matches('.*[A-Za-z0-9].*')) {
+        index++
+    }
+    // echo "Final Tail Index = ${index}"
+    def final_tail = part_3.substring(0, index)
+
+    // def final_tail = "test"
+    echo "Final Tail: ${final_tail}"
+
+    return [final_version, final_tail]
+}
+
+pipeline {
+    agent {
+        kubernetes {
+            inheritFrom 'tests-medusa'
+            defaultContainer 'tests-medusa'
+              yaml '''
+              spec:
+                containers:
+                - name: tests-medusa
+                  resourceRequestCpu: "100m"
+                  resourceRequestMemory: "256Mi"
+                  resourceRequestEphemeralStorage: "1024Mi"
+                  image: hub.docker.hpecorp.net/atlantia-qa/regression:atlantia-e2e
+                  imagePullPolicy: Always
+                  command: ["tail"]
+                  args: ["-f", "/dev/null"]
+                  ttyEnabled: true
+                - name: jnlp
+                  resourceRequestEphemeralStorage: "1024Mi"
+                  resources:
+                    requests:
+                        ephemeral-storage: "1024Mi"
+        '''
+        }
+    }
+
+    options {
+        // keep last 10 builds
+        buildDiscarder(
+            logRotator(numToKeepStr: '10')
+        )
+
+        skipDefaultCheckout true
+
+        timestamps()
+    }
+
+    triggers {
+        cron 'H 06 * * *'
+    }
+
+    parameters {
+        string(defaultValue: 'master',
+                description: 'Default value is master, type your branch name if you want to run build on specific branch',
+                name: 'BRANCH_NAME',
+                trim: true)
+        choice(
+            choices: ['EC2/EBS, RDS, GFRS, ACLM and Single Volume', 'EC2/EBS only', 'RDS only', 'GFRS only', 'Single Volume only', 'ACLM Sanity Setup only'],
+            name: 'SANITY_SUITES',
+            description: 'By default, the suites EC2/EBS, RDS and GFRS Sanity will be executed.<br>You may select to run either EC2/EBS, RDS or GFRS Sanity suites alone.')
+        booleanParam(defaultValue: true,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: 'ruben.kumar@hpe.com, sachin.uplaonkar@hpe.com, mark.balunis@hpe.com, tata@hpe.com, krzysztof.gibert@hpe.com',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Report Portal flag',
+                name: 'ENABLE_REPORT_PORTAL')
+        choice(
+            choices: ['true', 'false',],
+            name: 'DEPLOY_CAM',
+            description: "Deploys CAM bits to SCDEV01 if set to 'true'")
+        choice(
+            choices: ['true', 'false',],
+            name: 'DEPLOY_IM',
+            description: "Deploys IM bits to SCDEV01 if set to 'true'")
+        choice(
+            choices: ['true', 'false',],
+            name: 'DEPLOY_SCHEDULER',
+            description: "Deploys Scheduler bits to SCDEV01 if set to 'true'")
+        choice(
+            choices: ['true', 'false',],
+            name: 'DEPLOY_RDS_IM',
+            description: "Deploys RDS IM bits to SCDEV01 if set to 'true'")
+        choice(
+            choices: ['true', 'false',],
+            name: 'DEPLOY_FILE_METADATA_CONNECTOR',
+            description: "Deploys File Metadata Connector bits to SCDEV01 if set to 'true'")
+        choice(
+            choices: ['true', 'false',],
+            name: 'DEPLOY_FILE_INDEXER',
+            description: "Deploys File Indexer bits to SCDEV01 if set to 'true'")
+        choice(
+            choices: ['true', 'false',],
+            name: 'DEPLOY_LIFECYCLE',
+            description: "Deploys Lifecycle Manager bits to SCDEV01 if set to 'true'")
+    }
+
+    environment {
+        SERVICE_VERSION = 'service2'
+        CONFIG_FILE = 'variables_sanity_filepoc'
+        HTTPS_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        HTTP_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        NO_PROXY = '127.0.0.1,localhost,.nimblestorage.com,10.0.0.0/8'
+
+        // Atlantia ocelot services
+        CAM_SERVICE_NAME = 'cloud-account-manager'
+        IM_SERVICE_NAME = 'csp-inventory'
+        RDS_IM_SERVICE_NAME = 'csp-rds-inventory-manager'
+        SCHEDULER_SERVICE_NAME = 'csp-scheduler'
+        FMCS_SERVICE_NAME = 'file-metadata-connector'
+        FISS_SERVICE_NAME = 'file-metadata-indexer'
+        LIFECYCLE_SERVICE_NAME = 'csp-lifecycle'
+
+        SC_INFO_URL_FMT = 'https://sc-info.rtplab.nimblestorage.com/api/builds?sortBy={"sortKey":"run_on","sortDir":"desc","sortColumn":"run_on"}&filters=[{"columnName":"application","type":"search","value":"%s"},{"columnName":"cluster","type":"search","value":"%s-%s"}]&pagination={"startRow":0,"endRow":1}'
+    }
+
+    stages {
+        stage('Build Suite Configuration') {
+            steps {
+                echo "Stage 1 result = ${currentBuild.result}"
+                echo "Stage 1 currentResult = ${currentBuild.currentResult}"
+
+                script {
+                    if (params.SANITY_SUITES == 'EC2/EBS only') {
+                        suite_markers = ['ec2_ebs_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'RDS only') {
+                        suite_markers = ['rds_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'GFRS only') {
+                        suite_markers = ['gfrs_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'Single Volume only') {
+                        suite_markers = ['single_volume_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'ACLM Sanity Setup only') {
+                        suite_markers = ['aclm_sanity_setup']
+                    }
+
+                }
+            }
+        }
+
+        stage('Sanity Test And Deployment') {
+            stages {
+                // Retrieve the services versions from FILEPOC before Sanity tests execution
+                // List of services: CAM, IM, RDS-IM and Scheduler
+                stage('Retrieve Services Version from FILEPOC') {
+                    steps {
+                        echo "Stage 2a result = ${currentBuild.result}"
+                        echo "Stage 2a currentResult = ${currentBuild.currentResult}"
+                        // The curl command retrieves the chart version e.g 0.0.325-0-g49d2ddc8
+                        ///// CAM
+                        script {
+                            CloudAccountManagerFilepocURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${CAM_SERVICE_NAME} "filepoc" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            CloudAccountManagerVersionFilepoc = sh (
+                                script: "curl --location --globoff \'${CloudAccountManagerFilepocURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (CloudAccountManagerVersionFilepoc, CloudAccountManagerVersionFilepocTail) = clean_version_string(CloudAccountManagerVersionFilepoc)
+                        }
+                        echo "${CAM_SERVICE_NAME} chart version on FILEPOC: ${CloudAccountManagerVersionFilepoc}"
+                        //// IM
+                        script {
+                            InventoryManagerFilepocURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${IM_SERVICE_NAME} "filepoc" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            InventoryManagerVersionFilepoc = sh (
+                                script: "curl --location --globoff \'${InventoryManagerFilepocURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (InventoryManagerVersionFilepoc, InventoryManagerVersionFilepocTail) = clean_version_string(InventoryManagerVersionFilepoc)
+                        }
+                        echo "${IM_SERVICE_NAME} chart version on FILEPOC: ${InventoryManagerVersionFilepoc}"
+                        //// RDS IM
+                        script {
+                            RdsInventoryManagerFilepocURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${RDS_IM_SERVICE_NAME} "filepoc" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            RdsInventoryManagerVersionFilepoc = sh (
+                                script: "curl --location --globoff \'${RdsInventoryManagerFilepocURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (RdsInventoryManagerVersionFilepoc, RdsInventoryManagerVersionFilepocTail) = clean_version_string(RdsInventoryManagerVersionFilepoc)
+                        }
+                        echo "${RDS_IM_SERVICE_NAME} chart version on FILEPOC: ${RdsInventoryManagerVersionFilepoc}"
+                        //// SCHEDULER
+                        script {
+                            SchedulerFilepocURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${SCHEDULER_SERVICE_NAME}  "filepoc" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            SchedulerVersionFilepoc = sh (
+                                script: "curl --location --globoff \'${SchedulerFilepocURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (SchedulerVersionFilepoc, SchedulerVersionFilepocTail) = clean_version_string(SchedulerVersionFilepoc)
+                        }
+                        echo "${SCHEDULER_SERVICE_NAME} chart version on FILEPOC: ${SchedulerVersionFilepoc}"
+                        //// FMCS
+                        script {
+                            FileMetadataConnectorFilepocURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${FMCS_SERVICE_NAME} "filepoc" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            FileMetadataConnectorVersionFilepoc = sh (
+                                script: "curl --location --globoff \'${FileMetadataConnectorFilepocURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (FileMetadataConnectorVersionFilepoc, FileMetadataConnectorVersionFilepocTail) = clean_version_string(FileMetadataConnectorVersionFilepoc)
+                        }
+                        echo "${FMCS_SERVICE_NAME} chart version on FILEPOC: ${FileMetadataConnectorVersionFilepoc}"
+                        //// FISS
+                        script {
+                            FileMetadataIndexerFilepocURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${FISS_SERVICE_NAME} "filepoc" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            FileMetadataIndexerVersionFilepoc = sh (
+                                script: "curl --location --globoff \'${FileMetadataIndexerFilepocURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (FileMetadataIndexerVersionFilepoc, FileMetadataIndexerVersionFilepocTail) = clean_version_string(FileMetadataIndexerVersionFilepoc)
+                        }
+                        echo "${FISS_SERVICE_NAME} chart version on FILEPOC: ${FileMetadataIndexerVersionFilepoc}"
+                        //// LIFECYCLE
+                        script {
+                            LifecycleManagerFilepocURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${LIFECYCLE_SERVICE_NAME} "filepoc" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            LifecycleManagerVersionFilepoc = sh (
+                                script: "curl --location --globoff \'${LifecycleManagerFilepocURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (LifecycleManagerVersionFilepoc, LifecycleManagerVersionFilepocTail) = clean_version_string(LifecycleManagerVersionFilepoc)
+                        }
+                        echo "${LIFECYCLE_SERVICE_NAME} chart version on FILEPOC: ${LifecycleManagerVersionFilepoc}"
+                    }
+                }
+                stage("Checkout Repository") {
+                    steps {
+                        script {
+                            try {
+                                dir("${env.WORKSPACE}-${env.BUILD_NUMBER}")
+                                {
+                                    checkout(
+                                        [$class: 'GitSCM',
+                                        branches: [[name: "${params.BRANCH_NAME}"]],
+                                        extensions: [[$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true, timeout: 30]], 
+                                        userRemoteConfigs: [[credentialsId: 'nimble-dcs-org', url: 'https://github.hpe.com/nimble/qa_automation.git']]]
+                                    )
+                                }
+                            } catch (Exception e) {
+                                echo "Error: ${e}"
+                            }
+                        }
+                        
+                    }
+                }
+                stage("Update Client and Secret IDs") {
+                    steps {
+                        dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {
+                            script {
+                                // Get secret id for all users from Jenkins using client id stored as credentialId
+                                // Secret text format <client id>,<secret id>
+                                withCredentials([string(credentialsId: 'user_one_filepoc_sanity', variable: 'USER_ONE_CRED'), string(credentialsId: 'user_two_filepoc_sanity', variable: 'USER_TWO_CRED'), string(credentialsId: 'user_three_filepoc_sanity', variable: 'USER_THREE_CRED')]) {
+                                    // Execute Python script to update the client and secret ids in the config file
+                                    sh '''
+                                    python3 Medusa/utils/update_config_file.py variables_sanity_filepoc.ini admin $USER_ONE_CRED $USER_TWO_CRED $USER_THREE_CRED
+                                    '''                        
+                                }
+                            }
+                        }
+                    }
+                }
+                stage("Run Sanity Tests") {
+                    steps {
+                        script {
+                            echo "Stage 2b result = ${currentBuild.result}"
+                            echo "Stage 2b currentResult = ${currentBuild.currentResult}"
+
+                            currentBuild.description = "" // setting to empty string so that `null` is not reported
+                            generateSanityTestStage("setup_sanity").call()
+                                                        
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                // use "suite_markers" after the "Build Suite Configuration" stage
+                                parallel suite_markers.collectEntries {
+                                    ["${it}" : generateSanityTestStage(it)]
+                                }
+                            }
+
+                            // Add Validation only if Setup was performed
+                            if ("aclm_sanity_setup" in suite_markers) {
+                                generateSanityTestStage("aclm_sanity_validation").call()
+                            }
+
+                            generateSanityTestStage("teardown_sanity").call()
+                        }
+                        
+                    }
+                }
+                // Retrieve the services versions from SCDEVO1 after Sanity tests execution
+                // List of services: CAM, IM, RDS-IM and Scheduler
+                stage('Retrieve Services Version from SCDEV01') {
+                    steps {
+                        echo "Stage 2c result = ${currentBuild.result}"
+                        echo "Stage 2c currentResult = ${currentBuild.currentResult}"
+                        // The curl command retrieves the chart version e.g 0.0.325-0-g49d2ddc8
+                        //// CAM
+                        script {
+                            CloudAccountManagerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${CAM_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            CloudAccountManagerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${CloudAccountManagerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (CloudAccountManagerVersionScdev01, CloudAccountManagerVersionScdev01Tail) = clean_version_string(CloudAccountManagerVersionScdev01)
+                        }
+                        echo "${CAM_SERVICE_NAME} chart version on SCDEV01: ${CloudAccountManagerVersionScdev01}"
+                        //// IM
+                        script {
+                            InventoryManagerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${IM_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            InventoryManagerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${InventoryManagerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (InventoryManagerVersionScdev01, InventoryManagerVersionScdev01Tail) = clean_version_string(InventoryManagerVersionScdev01)
+                        }
+                        echo "${IM_SERVICE_NAME} chart version on SCDEV01: ${InventoryManagerVersionScdev01}"
+                        //// RDS IM
+                        script {
+                            RdsInventoryManagerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${RDS_IM_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            RdsInventoryManagerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${RdsInventoryManagerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (RdsInventoryManagerVersionScdev01, RdsInventoryManagerVersionScdev01Tail) = clean_version_string(RdsInventoryManagerVersionScdev01)
+                        }
+                        echo "${RDS_IM_SERVICE_NAME} chart version on SCDEV01: ${RdsInventoryManagerVersionScdev01}"
+                        //// SCHEDULER
+                        script {
+                            SchedulerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${SCHEDULER_SERVICE_NAME}  "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            SchedulerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${SchedulerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (SchedulerVersionScdev01, SchedulerVersionScdev01Tail) = clean_version_string(SchedulerVersionScdev01)
+                        }
+                        echo "${SCHEDULER_SERVICE_NAME} chart version on SCDEV01: ${SchedulerVersionScdev01}"
+                        //// FMCS
+                        script {
+                            FileMetadataConnectorScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${FMCS_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            FileMetadataConnectorVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${FileMetadataConnectorScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (FileMetadataConnectorVersionScdev01, FileMetadataConnectorVersionScdev01Tail) = clean_version_string(FileMetadataConnectorVersionScdev01)
+                        }
+                        echo "${FMCS_SERVICE_NAME} chart version on SCDEV01: ${FileMetadataConnectorVersionScdev01}"
+                        //// FISS
+                        script {
+                            FileMetadataIndexerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${FISS_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            FileMetadataIndexerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${FileMetadataIndexerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (FileMetadataIndexerVersionScdev01, FileMetadataIndexerVersionScdev01Tail) = clean_version_string(FileMetadataIndexerVersionScdev01)
+                        }
+                        echo "${FISS_SERVICE_NAME} chart version on SCDEV01: ${FileMetadataIndexerVersionScdev01}"
+                        //// LIFECYCLE
+                        script {
+                            LifecycleManagerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${LIFECYCLE_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            LifecycleManagerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${LifecycleManagerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (LifecycleManagerVersionScdev01, LifecycleManagerVersionScdev01Tail) = clean_version_string(LifecycleManagerVersionScdev01)
+                        }
+                        echo "${LIFECYCLE_SERVICE_NAME} chart version on SCDEV01: ${LifecycleManagerVersionScdev01}"
+                    }
+                }
+                stage('SCDEV01 Deployment for cloud-account-manager') {
+                    // TODO: update the comparison from lexical to semVer. The implications of lexical comparison will cause
+                    // auto-deployment to get hung up when one of the version components rolls over to an extra digit.
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { params.DEPLOY_CAM == 'true' }
+                        expression { CloudAccountManagerVersionFilepoc > CloudAccountManagerVersionScdev01 }
+                    }
+                    steps {
+                        script {
+                            scdev01_version = "${CloudAccountManagerVersionScdev01}-${CloudAccountManagerVersionScdev01Tail}"
+                            filepoc_version = "${CloudAccountManagerVersionFilepoc}-${CloudAccountManagerVersionFilepocTail}"
+                        }
+                        echo "Current version of ${CAM_SERVICE_NAME} on SCDEV01 is ${scdev01_version}. Deploying version ${filepoc_version} from FILEPOC to SCDEV01"
+                        deployToCluster(
+                            service: "${CAM_SERVICE_NAME}",
+                            cluster: 'scdev01-us-west-2',
+                            chartVersion: "${filepoc_version}",
+                        )
+                    }
+                }
+                stage('SCDEV01 Deployment for csp-inventory') {
+                    // TODO: update the comparison from lexical to semVer. The implications of lexical comparison will cause
+                    // auto-deployment to get hung up when one of the version components rolls over to an extra digit.
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { params.DEPLOY_IM == 'true' }
+                        expression { InventoryManagerVersionFilepoc > InventoryManagerVersionScdev01 }
+                    }
+                    steps {
+                        script {
+                            scdev01_version = "${InventoryManagerVersionScdev01}-${InventoryManagerVersionScdev01Tail}"
+                            filepoc_version = "${InventoryManagerVersionFilepoc}-${InventoryManagerVersionFilepocTail}"
+                        }
+                        echo "Current version of ${IM_SERVICE_NAME} on SCDEV01 is ${scdev01_version}. Deploying version ${filepoc_version} from FILEPOC to SCDEV01"
+                        deployToCluster(
+                            service: "${IM_SERVICE_NAME}",
+                            cluster: 'scdev01-us-west-2',
+                            chartVersion: "${filepoc_version}",
+                        )
+                    }
+                }
+                stage('SCDEV01 Deployment for csp-rds-inventory-manager') {
+                    // TODO: update the comparison from lexical to semVer. The implications of lexical comparison will cause
+                    // auto-deployment to get hung up when one of the version components rolls over to an extra digit.
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { params.DEPLOY_RDS_IM == 'true' }
+                        expression { RdsInventoryManagerVersionFilepoc > RdsInventoryManagerVersionScdev01 }
+                    }
+                    steps {
+                        script {
+                            scdev01_version = "${RdsInventoryManagerVersionScdev01}-${RdsInventoryManagerVersionScdev01Tail}"
+                            filepoc_version = "${RdsInventoryManagerVersionFilepoc}-${RdsInventoryManagerVersionFilepocTail}"
+                        }
+                        echo "Current version of ${RDS_IM_SERVICE_NAME} on SCDEV01 is ${scdev01_version}. Deploying version ${filepoc_version} from FILEPOC to SCDEV01"
+                        deployToCluster(
+                            service: "${RDS_IM_SERVICE_NAME}",
+                            cluster: 'scdev01-us-west-2',
+                            chartVersion: "${filepoc_version}",
+                        )
+                    }
+                }
+                stage('SCDEV01 Deployment for csp-scheduler') {
+                    // TODO: update the comparison from lexical to semVer. The implications of lexical comparison will cause
+                    // auto-deployment to get hung up when one of the version components rolls over to an extra digit.
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { params.DEPLOY_SCHEDULER == 'true' }
+                        expression { SchedulerVersionFilepoc > SchedulerVersionScdev01 }
+                    }
+                    steps {
+                        script {
+                            scdev01_version = "${SchedulerVersionScdev01}-${SchedulerVersionScdev01Tail}"
+                            filepoc_version = "${SchedulerVersionFilepoc}-${SchedulerVersionFilepocTail}"
+                        }
+                        echo "Current version of ${SCHEDULER_SERVICE_NAME} on SCDEV01 is ${scdev01_version}. Deploying version ${filepoc_version} from FILEPOC to SCDEV01"
+                        deployToCluster(
+                            service: "${SCHEDULER_SERVICE_NAME}",
+                            cluster: 'scdev01-us-west-2',
+                            chartVersion: "${filepoc_version}",
+                        )
+                    }
+                }
+                stage('SCDEV01 Deployment for file-metadata-connector') {
+                    // TODO: update the comparison from lexical to semVer. The implications of lexical comparison will cause
+                    // auto-deployment to get hung up when one of the version components rolls over to an extra digit.
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { params.DEPLOY_FILE_METADATA_CONNECTOR == 'true' }
+                        expression { FileMetadataConnectorVersionFilepoc > FileMetadataConnectorVersionScdev01 }
+                    }
+                    steps {
+                        script {
+                            scdev01_version = "${FileMetadataConnectorVersionScdev01}-${FileMetadataConnectorVersionScdev01Tail}"
+                            filepoc_version = "${FileMetadataConnectorVersionFilepoc}-${FileMetadataConnectorVersionFilepocTail}"
+                        }
+                        echo "Current version of ${FMCS_SERVICE_NAME} on SCDEV01 is ${scdev01_version}. Deploying version ${filepoc_version} from FILEPOC to SCDEV01"
+                        deployToCluster(
+                            service: "${FMCS_SERVICE_NAME}",
+                            cluster: 'scdev01-us-west-2',
+                            chartVersion: "${filepoc_version}",
+                        )
+                    }
+                }
+                stage('SCDEV01 Deployment for file-metadata-indexer') {
+                    // TODO: update the comparison from lexical to semVer. The implications of lexical comparison will cause
+                    // auto-deployment to get hung up when one of the version components rolls over to an extra digit.
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { params.DEPLOY_FILE_INDEXER == 'true' }
+                        expression { FileMetadataIndexerVersionFilepoc > FileMetadataIndexerVersionScdev01 }
+                    }
+                    steps {
+                        script {
+                            scdev01_version = "${FileMetadataIndexerVersionScdev01}-${FileMetadataIndexerVersionScdev01Tail}"
+                            filepoc_version = "${FileMetadataIndexerVersionFilepoc}-${FileMetadataIndexerVersionFilepocTail}"
+                        }
+                        echo "Current version of ${FISS_SERVICE_NAME} on SCDEV01 is ${scdev01_version}. Deploying version ${filepoc_version} from FILEPOC to SCDEV01"
+                        deployToCluster(
+                            service: "${FISS_SERVICE_NAME}",
+                            cluster: 'scdev01-us-west-2',
+                            chartVersion: "${filepoc_version}",
+                        )
+                    }
+                }
+                stage('SCDEV01 Deployment for csp-lifecycle') {
+                    // TODO: update the comparison from lexical to semVer. The implications of lexical comparison will cause
+                    // auto-deployment to get hung up when one of the version components rolls over to an extra digit.
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { params.DEPLOY_LIFECYCLE == 'true' }
+                        expression { LifecycleManagerVersionFilepoc > LifecycleManagerVersionScdev01 }
+                    }
+                    steps {
+                        script {
+                            scdev01_version = "${LifecycleManagerVersionScdev01}-${LifecycleManagerVersionScdev01Tail}"
+                            filepoc_version = "${LifecycleManagerVersionFilepoc}-${LifecycleManagerVersionFilepocTail}"
+                        }
+                        echo "Current version of ${LIFECYCLE_SERVICE_NAME} on SCDEV01 is ${scdev01_version}. Deploying version ${filepoc_version} from FILEPOC to SCDEV01"
+                        deployToCluster(
+                            service: "${LIFECYCLE_SERVICE_NAME}",
+                            cluster: 'scdev01-us-west-2',
+                            chartVersion: "${filepoc_version}",
+                        )
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                cleanWs()
+                chatNotification(channel: 'jenkins_sc_pqa_notification')
+            }
+        }
+    }
+}

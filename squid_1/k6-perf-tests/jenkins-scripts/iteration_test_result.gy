@@ -1,0 +1,43 @@
+JOBNAME = "Atlas_CFT_restore_backup"
+BUILDID = "34"
+TEXT="TestResult"
+
+for (job in Jenkins.instance.getAllItems(Job.class)) {
+  if (job.name == JOBNAME) {
+    for (build in job.builds) {
+      if (build.id == BUILDID) {
+        def lines = build.logFile.readLines()
+        def result = lines.findAll {
+          it.contains("TestResult") && it.contains("=>")
+        }
+        def passcount = lines.findAll {
+          it.contains("TestResult") && it.contains("=> PASS")
+        }
+        def failcount = lines.findAll {
+          it.contains("TestResult") && it.contains("=> FAIL")
+        }
+        
+        println "Total tests: ${result.size}"
+        println "Passed tests: ${passcount.size}"
+        println "Failed tests: ${failcount.size}"
+        // Result for each iteration
+    for (int i in 0..19) {
+    
+        def iterResult = result.findAll {
+        it.contains("Iteration ${i} ")
+        }
+        def iterpasscount = iterResult.findAll {
+        it.contains(TEXT) && it.contains("=> PASS")
+        }
+        def iterfailcount = iterResult.findAll {
+        it.contains(TEXT) && it.contains("=> FAIL")
+        }
+        println("Iteration ${i}, TOTAL => ${iterResult.size}, PASS => ${iterpasscount.size}, FAIL => ${iterfailcount.size}")
+        iterResult.each {
+        println "\t" + it
+        }
+    }
+      }
+    }
+  }
+}

@@ -1,0 +1,222 @@
+@Library('sc-jenkins-pipeline-shared') _
+
+// default values are for EC2/EBS, RDS and GFRS Sanity Tests
+def suite_markers = ["ec2_ebs_sanity", "rds_sanity", "gfrs_sanity", "single_volume_sanity", "aclm_sanity_setup"]
+
+def date = new Date()
+DAY = date.format("EEEE")
+
+def generateSanityTestStage(mark_suite) {
+    return {
+        stage("Stage: ${mark_suite}") {
+            dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {	
+                withCredentials([[
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                accessKeyVariable: 'ACCOUNT_ONE_AWS_KEY_ID',
+                                credentialsId: '896495663550',
+                                secretKeyVariable: 'ACCOUNT_ONE_AWS_SECRET_KEY'
+                            ]]) {
+                            withCredentials([[
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                accessKeyVariable: 'ACCOUNT_TWO_AWS_KEY_ID',
+                                credentialsId: '896495663550',
+                                secretKeyVariable: 'ACCOUNT_TWO_AWS_SECRET_KEY'
+                            ]]) {
+                            withCredentials([string(credentialsId: 'RP_API_KEY_2', variable: 'RP_API_KEY')]) {
+                                try 
+                                {
+                                    dir("${env.WORKSPACE}-${env.BUILD_NUMBER}/Medusa")
+                                    {
+                                        def rp_description = "'Atlantia SCINT B&R sanity build: ${env.BUILD_NUMBER}'"
+                                        def command = "pytest -sv -m '${mark_suite} and validated' -c configs/atlantia/pytest/pytest_sanity_scint.ini --log-file=logs_${mark_suite}/test_run_${mark_suite} --junitxml=logs/junit_${mark_suite}_${DAY}.xml"
+                                        if (params.ENABLE_REPORT_PORTAL) {
+                                            sh "${command} --reportportal --rp-launch SANITY-SCINT_${mark_suite}_$DAY --rp-launch-description ${rp_description} tests/e2e/aws_protection/test_sanity"
+                                        } else {
+                                            sh "${command} tests/e2e/aws_protection/test_sanity"
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                        echo "Error: ${e}"
+                                }
+                            }                    
+                            try {
+                                echo "Attempting to extract junit xml report from  Medusa/logs/junit_${mark_suite}_${DAY}.xml container:"
+                                def summary = junit allowEmptyResults: true, healthScaleFactor: 0.0, skipPublishingChecks: true, testResults: "Medusa/logs/junit_${mark_suite}_${DAY}.xml"
+                                currentBuild.description += "\n|${mark_suite.toUpperCase()} | Total: ${summary.totalCount} | Passed: ${summary.passCount} | Failures: ${summary.failCount} | Skipped: ${summary.skipCount} |"
+                            } catch  (Exception e) {
+                                echo "XML test report is not present in container, unable to extract results."
+                                echo "Error: ${e}"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+}
+
+
+pipeline {
+    agent {
+        kubernetes {
+            inheritFrom 'tests-medusa'
+            defaultContainer 'tests-medusa'
+              yaml '''
+              spec:
+                containers:
+                - name: tests-medusa
+                  resourceRequestCpu: "100m"
+                  resourceRequestMemory: "256Mi"
+                  resourceRequestEphemeralStorage: "1024Mi"
+                  image: hub.docker.hpecorp.net/atlantia-qa/regression:atlantia-e2e
+                  imagePullPolicy: Always
+                  command: ["tail"]
+                  args: ["-f", "/dev/null"]
+                  ttyEnabled: true
+                - name: jnlp
+                  resourceRequestEphemeralStorage: "1024Mi"
+                  resources:
+                    requests:
+                        ephemeral-storage: "1024Mi"
+        '''
+        }
+    }
+
+    options {
+        // keep last 50 builds
+        buildDiscarder(
+            logRotator(numToKeepStr: '50')
+        )
+
+        skipDefaultCheckout true
+
+        timestamps()
+    }
+
+    triggers {
+        cron 'H 06 * * *'
+    }
+
+    parameters {
+        string(defaultValue: 'master',
+                description: 'Default value is master, type your branch name if you want to run build on specific branch',
+                name: 'BRANCH_NAME',
+                trim: true)
+        string(defaultValue: 'refs/tags/v3.3-scint',
+                description: 'Default value is tags/v3.3-scint, type your tag name if you want to run build using a specific tag',
+                name: 'TAG',
+                trim: true)
+        choice(
+            choices: ['EC2/EBS, RDS, GFRS, ACLM and Single Volume', 'EC2/EBS only', 'RDS only', 'GFRS only', 'Single Volume only', 'ACLM Sanity Setup only'],
+            name: 'SANITY_SUITES',
+            description: 'By default, the EC2/EBS, RDS and GFRS tests will be executed.<br>You may select to run either EC2/EBS, RDS or GFRS Sanity tests alone.')
+        booleanParam(defaultValue: true,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: 'ruben.kumar@hpe.com, sachin.uplaonkar@hpe.com, mark.balunis@hpe.com, tata@hpe.com, krzysztof.gibert@hpe.coms',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Report Portal flag',
+                name: 'ENABLE_REPORT_PORTAL')
+    }
+
+    environment {
+        SERVICE_VERSION = 'service2'
+        CONFIG_FILE = 'variables_sanity_scint'
+        HTTPS_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        HTTP_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        NO_PROXY = '127.0.0.1,localhost,.nimblestorage.com,10.0.0.0/8'
+    }
+
+    stages {
+        stage('Build Suite Configuration') {
+            steps {
+                script {
+                    if (params.SANITY_SUITES == 'EC2/EBS only') {
+                        suite_markers = ['ec2_ebs_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'RDS only') {
+                        suite_markers = ['rds_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'GFRS only') {
+                        suite_markers = ['gfrs_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'Single Volume only') {
+                        suite_markers = ['single_volume_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'ACLM Sanity Setup only') {
+                        suite_markers = ['aclm_sanity_setup']
+                    }
+                }
+            }
+        }
+
+        stage("Checkout Repository") {
+            steps {
+                script {
+                    try {
+                        dir("${env.WORKSPACE}-${env.BUILD_NUMBER}")
+                        {
+                            checkout(
+                                [$class: 'GitSCM',
+                                branches: [[name: "${params.TAG}"]],
+                                extensions: [[$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true, timeout: 30]], 
+                                userRemoteConfigs: [[credentialsId: 'nimble-dcs-org', url: 'https://github.hpe.com/nimble/qa_automation.git']]]
+                            )
+                        }
+                    } catch (Exception e) {
+                            echo "Error: ${e}"
+                    }
+                }
+            }
+        }
+
+        stage("Update Client and Secret IDs") {
+            steps {
+                dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {
+                    script {
+                        // Get secret id for all users from Jenkins using client id stored as credentialId
+                        // Secret text format <client id>,<secret id>
+                        withCredentials([string(credentialsId: 'user_one_scint_sanity', variable: 'USER_ONE_CRED'), string(credentialsId: 'user_two_scint_sanity', variable: 'USER_TWO_CRED'), string(credentialsId: 'user_three_scint_sanity', variable: 'USER_THREE_CRED')]) {
+                            // Execute Python script to update the client and secret ids in the config file
+                            sh '''
+                            python3 Medusa/utils/update_config_file.py variables_sanity_scint.ini admin $USER_ONE_CRED $USER_TWO_CRED $USER_THREE_CRED
+                            '''                        
+                        }
+                    }
+                }
+            }
+        }
+
+        stage("Run Sanity Tests") {
+            steps {
+                script {
+                    currentBuild.description = "" // setting to empty string so that `null` is not reported
+                    generateSanityTestStage("setup_sanity").call()
+                                                
+                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                        // use "suite_markers" after the "Build Suite Configuration" stage
+                        parallel suite_markers.collectEntries {
+                            ["${it}" : generateSanityTestStage(it)]
+                        }
+                    }
+
+                    // Add Validation only if Setup was performed
+                    if ("aclm_sanity_setup" in suite_markers) {
+                        generateSanityTestStage("aclm_sanity_validation").call()
+                    }
+
+                    generateSanityTestStage("teardown_sanity").call()
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                cleanWs()
+                chatNotification(channel: 'jenkins_sc_pqa_notification')
+            }
+        }
+    }
+}

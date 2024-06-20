@@ -1,0 +1,187 @@
+pipeline {
+    agent {
+        label 'atlantia-jenkins'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder logRotator(artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '20',
+                daysToKeepStr: '',
+                numToKeepStr: '20')
+        skipDefaultCheckout()
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        string(defaultValue: 'v1.0-scdev01',
+                description: 'Empty value will NOT trigger any tests' +
+                        'Single grouping tag is: accounts, protection_policy, inventory, protection_group, backup_restore, dashboard\n' +
+                        'type your tag or tags (comma separated) to run tests with given tags\n' +
+                        'as follows: accounts\n' +
+                        'or follows: accounts, protection_policy\n' +
+                        'or include your own tag in development - mark,ruben,tomasz etc.' +
+                        'If SINGLE tag is used then dedicated pytest<tag>.ini file will be picked up\n',
+                name: 'TAGS',
+                trim: true)
+        booleanParam(defaultValue: true,
+                description: "When checked there is no need to check and write emails in params below",
+                name: 'EMAIL_JUST_TO_SELF')
+        booleanParam(defaultValue: false,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: '',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+    }
+
+    environment {
+        CONTAINER_NAME = "atlantia_e2e_scdev01_custom_regression"
+    }
+
+    stages {
+        stage('Checkout Repository') {
+            steps {
+                // git branch: "${params.BRANCH_NAME}", credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/qa_automation.git'
+                checkout(
+                            [$class: 'GitSCM',
+                            branches: [[name: "${params.TAGS}"]],
+                            userRemoteConfigs: [[credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/qa_automation.git']]]
+                        )
+            }
+        }
+        stage('Copy Credentials') {
+            steps {
+                withCredentials([file(credentialsId: 'scdev01_aws_env_regression_custom', variable: 'key_pair'),
+                                 file(credentialsId: 'scdev01_aws_env_regression', variable: 'environment')
+                ]) {
+                    sh '''
+          cp $key_pair $WORKSPACE/Medusa/key_pair.pem
+          cp $environment $WORKSPACE/Medusa/.env
+          chmod +x $WORKSPACE/Medusa/.env
+          '''
+                }
+            }
+        }
+        stage('Run Customized Regression Tests') {
+            steps {
+                script {
+                    def result = ""
+                    def LOWER_LIMIT = 10000
+                    def UPPER_LIMIT = 99999
+                    def random_number = Math.abs(new Random().nextInt() % (UPPER_LIMIT - LOWER_LIMIT)) + LOWER_LIMIT
+                    sh "ls $WORKSPACE"
+                    params.TAGS.split(',').each { tag ->
+                        stage(tag) {
+                            try {
+                                result = "PASSED"
+                                tag = tag.trim().toLowerCase()
+                                if (["accounts", "protection_policy", "inventory", "protection_group", "backup_restore", "dashboard"].contains(tag)) {
+                                    pytest_ini_file_name = "pytest_regression_scdev01_${tag}.ini"
+                                } else {
+                                    pytest_ini_file_name = "pytest_regression_scdev01.ini"
+                                }
+                                def command = "docker run -w /Medusa --name ${env.CONTAINER_NAME}_${tag}_${random_number} --pull always --env-file $WORKSPACE/Medusa/.env -e SERVICE_VERSION='service2' -e CONFIG_FILE='variables_regression_custom_scdev01' -v $WORKSPACE/Medusa:/Medusa hub.docker.hpecorp.net/atlantia-qa/regression:atlantia-e2e pytest -sv -m \"validated and ${tag}\" -c configs/atlantia/pytest/${pytest_ini_file_name} --junitxml=logs/junit.xml"
+                                sh "${command} /Medusa/tests/e2e/aws_protection/test_regression"
+                            } catch (err) {
+                                result = "FAILED"
+                            }
+
+                            try {
+                                echo "Attempting to stop ${env.CONTAINER_NAME}_${tag}_${random_number} container:"
+                                sh "docker stop ${env.CONTAINER_NAME}_${tag}_${random_number}"
+                                echo "${env.CONTAINER_NAME}_${tag}_${random_number} stopped."
+                            } catch (err) {
+                                echo "Container ${env.CONTAINER_NAME}_${tag}_${random_number} is not running."
+                            }
+
+
+                            try {
+                                echo "Attempting to extract test logs from ${env.CONTAINER_NAME}_${tag}_${random_number} container:"
+                                sh "docker cp ${env.CONTAINER_NAME}_${tag}_${random_number}:/Medusa/logs/test_run.log ${WORKSPACE}/${env.BUILD_NUMBER}${tag}_test_run.log"
+                                archiveArtifacts artifacts: "${env.BUILD_NUMBER}${tag}_test_run.log", followSymlinks: false
+                            } catch (err) {
+                                echo "Logs are not present in container ${env.CONTAINER_NAME}_${tag}_${random_number}, unable to export artifact."
+                            }
+
+                            def testResults = ""
+
+                            try {
+                                echo "Attempting to extract junit xml report from ${env.CONTAINER_NAME}_${tag}_${random_number} container:"
+                                sh "docker cp ${env.CONTAINER_NAME}_${tag}_${random_number}:/Medusa/logs/junit.xml ${WORKSPACE}/${env.BUILD_NUMBER}${tag}_junit.xml"
+                                def summary = junit allowEmptyResults: true, healthScaleFactor: 0.0, skipPublishingChecks: true, testResults: "${env.BUILD_NUMBER}${tag}_junit.xml"
+                                testResults = "\n\nTest Summary\n---\nTotal: ${summary.totalCount}\nPassed: ${summary.passCount}\nFailures: ${summary.failCount}\nSkipped: ${summary.skipCount}"
+                            } catch (err) {
+                                echo "XML test report is not present in container ${env.CONTAINER_NAME}_${tag}_${random_number}, unable to extract results."
+                            }
+
+
+                            try {
+                                echo "Attempting to remove ${env.CONTAINER_NAME}_${tag}_${random_number} container:"
+                                sh "docker rm ${env.CONTAINER_NAME}_${tag}_${random_number}"
+                                echo "${env.CONTAINER_NAME}_${tag}_${random_number} removed."
+                            } catch (err) {
+                                echo "Container ${env.CONTAINER_NAME}_${tag}_${random_number} does not exist."
+                            }
+
+                            try {
+                                echo "Attempting to remove dangling images using 'docker image prune -f'"
+                                sh "docker image prune -f"
+                                echo "Removed dangling images"
+                            } catch (err) {
+                                echo "Failed to remove dangling images from the system"
+                            }
+
+
+                            if (params.SEND_EMAILS || params.EMAIL_JUST_TO_SELF) {
+                                echo "attempting to send email"
+                                def emailSubject = "${env.JOB_NAME} ${env.BUILD_NUMBER} - ${tag} - Status ${result}"
+                                def emailBodyTemplate = """
+                                Build ran on branch: ${params.BRANCH_NAME}
+                                Link to build: ${env.BUILD_URL}
+                                Link to console: ${env.BUILD_URL}console
+                                Link to artifact: ${env.BUILD_URL}artifact
+                                 """.stripIndent()
+
+                                def withFiles = false;
+                                def files = null;
+
+                                try {
+                                    zip zipFile: "results_${env.BUILD_NUMBER}${tag}.zip", archive: false, glob: "**/${env.BUILD_NUMBER}${tag}_junit.xml, **/${env.BUILD_NUMBER}${tag}_test_run.log"
+                                    withFiles = true
+                                }
+                                catch (err) {
+                                    "Failed to zip files"
+                                }
+
+                                emailBodyTemplate += testResults
+
+                                def mailRecipients = params.EMAIL_LIST
+
+                                if (params.EMAIL_JUST_TO_SELF) {
+                                    def user = hudson.model.User.current();
+                                    mailRecipients = user.getProperty(hudson.tasks.Mailer.UserProperty.class).getAddress()
+                                }
+
+                                if (withFiles) {
+                                    emailext(to: mailRecipients,
+                                            subject: emailSubject,
+                                            body: emailBodyTemplate,
+                                            attachmentsPattern: "**/results_${env.BUILD_NUMBER}${tag}.zip"
+                                    )
+                                } else {
+                                    emailext(to: mailRecipients,
+                                            subject: emailSubject,
+                                            body: emailBodyTemplate,
+                                    )
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post("cleanup") { always { cleanWs() } }
+}

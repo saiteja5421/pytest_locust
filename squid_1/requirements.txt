@@ -1,0 +1,5 @@
+locust==2.15.1
+locust-plugins==3.3.1
+boto3
+black
+python-dotenv==1.0.0

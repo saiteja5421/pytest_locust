@@ -1,0 +1,371 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "items": [
+                {
+                    "associatedResource": {
+                        "id": "volume123",
+                        "name": "dev volume",
+                        "type": "volume"
+                    },
+                    "code": "eventcode",
+                    "contextId": "contextID",
+                    "customerId": "customer123",
+                    "id": "id123",
+                    "message": "volume 123 created",
+                    "occurredAt": "2020-09-08T16:51:33Z",
+                    "permission": "volume.create",
+                    "scope": "/volume/foo",
+                    "source": "audit",
+                    "sourceIpAddress": "1.2.3.4",
+                    "state": "Success",
+                    "taskId": "taskid123",
+                    "uniqueId": "audit.event+6+12345678",
+                    "userEmail": "abc@dev.com",
+                    "version": 1
+                }
+            ],
+            "pageLimit": 100,
+            "pageOffset": 0,
+            "total": 123456
+        }
+    ],
+    "required": [
+        "items",
+        "pageLimit",
+        "pageOffset",
+        "total"
+    ],
+    "properties": {
+        "items": {
+            "$id": "#/properties/items",
+            "type": "array",
+            "title": "The items schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "associatedResource": {
+                            "id": "volume123",
+                            "name": "dev volume",
+                            "type": "volume"
+                        },
+                        "code": "eventcode",
+                        "contextId": "contextID",
+                        "customerId": "customer123",
+                        "id": "id123",
+                        "message": "volume 123 created",
+                        "occurredAt": "2020-09-08T16:51:33Z",
+                        "permission": "volume.create",
+                        "scope": "/volume/foo",
+                        "source": "audit",
+                        "sourceIpAddress": "1.2.3.4",
+                        "state": "Success",
+                        "taskId": "taskid123",
+                        "uniqueId": "audit.event+6+12345678",
+                        "userEmail": "abc@dev.com",
+                        "version": 1
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/items/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/items/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "associatedResource": {
+                                    "id": "volume123",
+                                    "name": "dev volume",
+                                    "type": "volume"
+                                },
+                                "code": "eventcode",
+                                "contextId": "contextID",
+                                "customerId": "customer123",
+                                "id": "id123",
+                                "message": "volume 123 created",
+                                "occurredAt": "2020-09-08T16:51:33Z",
+                                "permission": "volume.create",
+                                "scope": "/volume/foo",
+                                "source": "audit",
+                                "sourceIpAddress": "1.2.3.4",
+                                "state": "Success",
+                                "taskId": "taskid123",
+                                "uniqueId": "audit.event+6+12345678",
+                                "userEmail": "abc@dev.com",
+                                "version": 1
+                            }
+                        ],
+                        "required": [
+                            "associatedResource",
+                            "code",
+                            "contextId",
+                            "customerId",
+                            "id",
+                            "message",
+                            "occurredAt",
+                            "permission",
+                            "scope",
+                            "source",
+                            "sourceIpAddress",
+                            "state",
+                            "taskId",
+                            "uniqueId",
+                            "userEmail",
+                            "version"
+                        ],
+                        "properties": {
+                            "associatedResource": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/associatedResource",
+                                "type": "object",
+                                "title": "The associatedResource schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": {},
+                                "examples": [
+                                    {
+                                        "id": "volume123",
+                                        "name": "dev volume",
+                                        "type": "volume"
+                                    }
+                                ],
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "$id": "#/properties/items/items/anyOf/0/properties/associatedResource/properties/id",
+                                        "type": "string",
+                                        "title": "The id schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "volume123"
+                                        ]
+                                    },
+                                    "name": {
+                                        "$id": "#/properties/items/items/anyOf/0/properties/associatedResource/properties/name",
+                                        "type": "string",
+                                        "title": "The name schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "dev volume"
+                                        ]
+                                    },
+                                    "type": {
+                                        "$id": "#/properties/items/items/anyOf/0/properties/associatedResource/properties/type",
+                                        "type": "string",
+                                        "title": "The type schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "volume"
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": true
+                            },
+                            "code": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/code",
+                                "type": "string",
+                                "title": "The code schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "eventcode"
+                                ]
+                            },
+                            "contextId": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/contextId",
+                                "type": "string",
+                                "title": "The contextId schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "contextID"
+                                ]
+                            },
+                            "customerId": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/customerId",
+                                "type": "string",
+                                "title": "The customerId schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "customer123"
+                                ]
+                            },
+                            "id": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/id",
+                                "type": "string",
+                                "title": "The id schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "id123"
+                                ]
+                            },
+                            "message": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/message",
+                                "type": "string",
+                                "title": "The message schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "volume 123 created"
+                                ]
+                            },
+                            "occurredAt": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/occurredAt",
+                                "type": "string",
+                                "title": "The occurredAt schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "2020-09-08T16:51:33Z"
+                                ]
+                            },
+                            "permission": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/permission",
+                                "type": "string",
+                                "title": "The permission schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "volume.create"
+                                ]
+                            },
+                            "scope": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/scope",
+                                "type": "string",
+                                "title": "The scope schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "/volume/foo"
+                                ]
+                            },
+                            "source": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/source",
+                                "type": "string",
+                                "title": "The source schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "audit"
+                                ]
+                            },
+                            "sourceIpAddress": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/sourceIpAddress",
+                                "type": "string",
+                                "title": "The sourceIpAddress schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "1.2.3.4"
+                                ]
+                            },
+                            "state": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/state",
+                                "type": "string",
+                                "title": "The state schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "Success"
+                                ]
+                            },
+                            "taskId": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/taskId",
+                                "type": "string",
+                                "title": "The taskId schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "taskid123"
+                                ]
+                            },
+                            "uniqueId": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/uniqueId",
+                                "type": "string",
+                                "title": "The uniqueId schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "audit.event+6+12345678"
+                                ]
+                            },
+                            "userEmail": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/userEmail",
+                                "type": "string",
+                                "title": "The userEmail schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "abc@dev.com"
+                                ]
+                            },
+                            "version": {
+                                "$id": "#/properties/items/items/anyOf/0/properties/version",
+                                "type": "integer",
+                                "title": "The version schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": 0,
+                                "examples": [
+                                    1
+                                ]
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                ]
+            }
+        },
+        "pageLimit": {
+            "$id": "#/properties/pageLimit",
+            "type": "integer",
+            "title": "The pageLimit schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                100
+            ]
+        },
+        "pageOffset": {
+            "$id": "#/properties/pageOffset",
+            "type": "integer",
+            "title": "The pageOffset schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "total": {
+            "$id": "#/properties/total",
+            "type": "integer",
+            "title": "The total schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                123456
+            ]
+        }
+    },
+    "additionalProperties": true
+}

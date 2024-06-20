@@ -1,0 +1,152 @@
+pipeline {
+    agent {
+        label 'ATLAS-QA-NODE'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder logRotator(artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '20',
+                daysToKeepStr: '',
+                numToKeepStr: '20')
+        skipDefaultCheckout()
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        string(defaultValue: 'main',
+                description: 'Default value is main, type your branch name if you want to run build on specific branch',
+                name: 'BRANCH_NAME',
+                trim: true)
+        booleanParam(defaultValue: false,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: 'subha.palani@hpe.com',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Report Portal flag',
+                name: 'ENABLE_REPORT_PORTAL')
+        string(defaultValue: '--users=5 --run-time=60m',
+                description: 'Users and runtime configurations for service1 psr backup and restore workflow ',
+                name: 'S1_PSR_BACKUP_RESTORE_RUN_CONFIG',
+                trim: true)
+    }
+
+    environment {
+        CONTAINER_NAME = "atlas_psr_con_backup_restore"
+        IMAGE_NAME = "atlas_psr_backup_restore"
+        PSR_ENV_FILE = credentials('SCDEV01_ATLAS_PSR')
+        PARENT_DIR = "/workspaces/Squid"
+    }
+
+    stages {
+        stage('Checkout Repository') {
+            steps {
+                checkout(
+                    [$class: 'GitSCM',
+                    branches: [[name: "${params.BRANCH_NAME}"]],
+                    extensions: [cloneOption(noTags: false, reference: '', shallow: true, timeout: 30)],
+                    userRemoteConfigs: [[credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/Squid.git']]]
+                )
+            }
+        }
+        stage('Copy .env file') 
+        {
+            steps
+            {
+                withCredentials([file(credentialsId: 'SCDEV01_ATLAS_PSR', variable: 'environment')]) {
+                sh ''' 
+                cp $environment $WORKSPACE/.env
+                chmod  +x $WORKSPACE/.env
+                '''
+                }
+            }
+        }
+        stage('Build Docker Image') 
+        {
+            steps
+            {
+                sh """ 
+                docker build --file Dockerfile --tag $IMAGE_NAME:v1.0 . 
+                echo "Grep or list the recently created Docker Images which has the 'atlas' name in it"
+                docker images | grep $IMAGE_NAME
+                """
+            }
+        }
+        stage('Run S1-PSR-BACKUP-RESTORE Workflow Tests') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        sh "ls -lart $WORKSPACE"
+                        sh "docker run --rm -w ${env.PARENT_DIR} --name ${env.CONTAINER_NAME} --env-file $PSR_ENV_FILE -e ENABLE_REPORT_PORTAL=${params.ENABLE_REPORT_PORTAL} -e LOCUST_HOST='https://scdev01-app.qa.cds.hpe.com' -e CONFIG_FILE_PATH=${env.PARENT_DIR}/s1_vmware_config.yml -v $WORKSPACE:${env.PARENT_DIR} $IMAGE_NAME:v1.0 locust -f tests/vmware/backup_restore/test_backup_restore.py --config=tests/s1_locust.conf --headless ${params.S1_PSR_BACKUP_RESTORE_RUN_CONFIG}"
+                    }
+                }
+            }
+        }
+       
+    }  
+    post {
+        always {
+            script {
+                try {
+                    echo "Attempting to stop ${env.CONTAINER_NAME} container:"
+                    sh "docker stop ${env.CONTAINER_NAME}"
+                    echo "${env.CONTAINER_NAME} stopped."
+                } catch (err) {
+                    echo "Container ${env.CONTAINER_NAME} is not running."
+                }
+
+                def testResults = ""
+                
+                try {
+                    echo "Attempting to remove ${env.CONTAINER_NAME} container:"
+                    sh "docker rm ${env.CONTAINER_NAME}"
+                    echo "${env.CONTAINER_NAME} removed."
+                } catch (err) {
+                    echo "Container ${env.CONTAINER_NAME} does not exist."
+                }
+
+                try {
+                    echo "Attempting to remove dangling images using 'docker image prune -f'"
+                    sh "docker image prune -f"
+                    echo "Removed dangling images"
+                } catch (err) {
+                    echo "Failed to remove dangling images from the system"
+                }
+
+                cleanWs()
+
+                if (params.SEND_EMAILS) {
+                    def emailSubject = "${env.JOB_NAME} ${env.BUILD_NUMBER} - Status ${currentBuild.result}"
+                    def emailBodyTemplate = """
+                    Build ran on branch: ${params.BRANCH_NAME}
+                    Are logs on Report Portal?: ${params.ENABLE_GRAFANA_REPORT}
+
+                    Link to build: ${env.BUILD_URL}
+                    Link to console: ${env.BUILD_URL}console
+                    Link to artifact: ${env.BUILD_URL}artifact
+                    """.stripIndent()
+
+                    emailBodyTemplate += testResults
+
+                    mail body: emailBodyTemplate, subject: emailSubject, to: params.EMAIL_LIST
+                }
+
+                color = [SUCCESS: "good",
+                         FAILURE: "danger"]
+                        .get(currentBuild.currentResult, "warning")
+
+
+                // Send notification to slack
+                // slackSend (message: "${env.JOB_NAME} ${env.BUILD_NUMBER} - ${currentBuild.result}\n${env.BUILD_URL}console\n${testResults}",
+                //            channel: 'jenkins_notifications',
+                //            teamDomain: 'hpe-internal',
+                //            tokenCredentialId: 'slack-notificaitons',
+                //            color: "${color}",
+                //            iconEmoji: ':hpe-bot')
+
+            }
+        }
+    }
+}

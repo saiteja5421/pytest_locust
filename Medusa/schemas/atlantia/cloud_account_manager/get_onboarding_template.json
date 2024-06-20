@@ -1,0 +1,41 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "onboardingTemplate": "string",
+            "version": "string"
+        }
+    ],
+    "required": [
+        "onboardingTemplate",
+        "version"
+    ],
+    "properties": {
+        "onboardingTemplate": {
+            "$id": "#/properties/onboardingTemplate",
+            "type": "string",
+            "title": "The onboardingTemplate schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "version": {
+            "$id": "#/properties/version",
+            "type": "string",
+            "title": "The version schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        }
+    },
+    "additionalProperties": true
+}

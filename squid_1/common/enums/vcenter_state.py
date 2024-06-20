@@ -1,0 +1,12 @@
+from enum import Enum
+
+
+class VcenterState(Enum):
+    OK = "OK"
+    ERROR = "ERROR"
+    INITIALIZING = "INITIALIZING"
+    CREATING = "CREATING"
+    DELETING = "DELETING"
+    UPDATING = "UPDATING"
+    REFRESHING = "REFRESHING"
+    CONFIGURED = "CONFIGURED"

@@ -1,0 +1,329 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "id": "df8c4318-13ab-4dde-95f6-beacef1c7565",
+            "customerId": "2bf37a19-66cc-49d2-9e92-935195ead42e",
+            "type": "k8s-cluster",
+            "name": "may-17-3",
+            "generation": 1,
+            "resourceUri": "/k8s-clusters/df8c4318-13ab-4dde-95f6-beacef1c7565",
+            "connectionState": 1,
+            "kubernetesType": "",
+            "kubernetesVersion": "",
+            "nodeCount": 0,
+            "serialNumber": "",
+            "softwarePackageVersion": "",
+            "state": 3,
+            "stateReason": "",
+            "status": 1,
+            "upTimeInSeconds": 0,
+            "applicationInformerVersion": "",
+            "backupActionVersion": "",
+            "backupSchedulerVersion": "",
+            "csiDriverVersion": "",
+            "cspNimbleVersion": "",
+            "cspPrimeraVersion": "",
+            "deviceInterfaceVersion": "",
+            "restoreActionVersion": "",
+            "poweredOnAt": "0001-01-01T00:00:00Z",
+            "softwarePackageUpdatedAt": "0001-01-01T00:00:00Z"
+        }
+    ],
+    "required": [
+        "id",
+        "customerId",
+        "type",
+        "name",
+        "generation",
+        "resourceUri",
+        "connectionState",
+        "kubernetesType",
+        "kubernetesVersion",
+        "nodeCount",
+        "serialNumber",
+        "softwarePackageVersion",
+        "state",
+        "stateReason",
+        "status",
+        "upTimeInSeconds",
+        "applicationInformerVersion",
+        "backupActionVersion",
+        "backupSchedulerVersion",
+        "csiDriverVersion",
+        "cspNimbleVersion",
+        "cspPrimeraVersion",
+        "deviceInterfaceVersion",
+        "restoreActionVersion",
+        "poweredOnAt",
+        "softwarePackageUpdatedAt"
+    ],
+    "properties": {
+        "id": {
+            "$id": "#/properties/id",
+            "type": "string",
+            "title": "The id schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "df8c4318-13ab-4dde-95f6-beacef1c7565"
+            ]
+        },
+        "customerId": {
+            "$id": "#/properties/customerId",
+            "type": "string",
+            "title": "The customerId schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "2bf37a19-66cc-49d2-9e92-935195ead42e"
+            ]
+        },
+        "type": {
+            "$id": "#/properties/type",
+            "type": "string",
+            "title": "The type schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "k8s-cluster"
+            ]
+        },
+        "name": {
+            "$id": "#/properties/name",
+            "type": "string",
+            "title": "The name schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "may-17-3"
+            ]
+        },
+        "generation": {
+            "$id": "#/properties/generation",
+            "type": "integer",
+            "title": "The generation schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                1
+            ]
+        },
+        "resourceUri": {
+            "$id": "#/properties/resourceUri",
+            "type": "string",
+            "title": "The resourceUri schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "/k8s-clusters/df8c4318-13ab-4dde-95f6-beacef1c7565"
+            ]
+        },
+        "connectionState": {
+            "$id": "#/properties/connectionState",
+            "type": "integer",
+            "title": "The connectionState schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                1
+            ]
+        },
+        "kubernetesType": {
+            "$id": "#/properties/kubernetesType",
+            "type": "string",
+            "title": "The kubernetesType schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "kubernetesVersion": {
+            "$id": "#/properties/kubernetesVersion",
+            "type": "string",
+            "title": "The kubernetesVersion schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "nodeCount": {
+            "$id": "#/properties/nodeCount",
+            "type": "integer",
+            "title": "The nodeCount schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "serialNumber": {
+            "$id": "#/properties/serialNumber",
+            "type": "string",
+            "title": "The serialNumber schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "softwarePackageVersion": {
+            "$id": "#/properties/softwarePackageVersion",
+            "type": "string",
+            "title": "The softwarePackageVersion schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "state": {
+            "$id": "#/properties/state",
+            "type": "integer",
+            "title": "The state schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                3
+            ]
+        },
+        "stateReason": {
+            "$id": "#/properties/stateReason",
+            "type": "string",
+            "title": "The stateReason schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "status": {
+            "$id": "#/properties/status",
+            "type": "integer",
+            "title": "The status schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                1
+            ]
+        },
+        "upTimeInSeconds": {
+            "$id": "#/properties/upTimeInSeconds",
+            "type": "integer",
+            "title": "The upTimeInSeconds schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "applicationInformerVersion": {
+            "$id": "#/properties/applicationInformerVersion",
+            "type": "string",
+            "title": "The applicationInformerVersion schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "backupActionVersion": {
+            "$id": "#/properties/backupActionVersion",
+            "type": "string",
+            "title": "The backupActionVersion schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "backupSchedulerVersion": {
+            "$id": "#/properties/backupSchedulerVersion",
+            "type": "string",
+            "title": "The backupSchedulerVersion schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "csiDriverVersion": {
+            "$id": "#/properties/csiDriverVersion",
+            "type": "string",
+            "title": "The csiDriverVersion schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "cspNimbleVersion": {
+            "$id": "#/properties/cspNimbleVersion",
+            "type": "string",
+            "title": "The cspNimbleVersion schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "cspPrimeraVersion": {
+            "$id": "#/properties/cspPrimeraVersion",
+            "type": "string",
+            "title": "The cspPrimeraVersion schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "deviceInterfaceVersion": {
+            "$id": "#/properties/deviceInterfaceVersion",
+            "type": "string",
+            "title": "The deviceInterfaceVersion schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "restoreActionVersion": {
+            "$id": "#/properties/restoreActionVersion",
+            "type": "string",
+            "title": "The restoreActionVersion schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                ""
+            ]
+        },
+        "poweredOnAt": {
+            "$id": "#/properties/poweredOnAt",
+            "type": "string",
+            "title": "The poweredOnAt schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "0001-01-01T00:00:00Z"
+            ]
+        },
+        "softwarePackageUpdatedAt": {
+            "$id": "#/properties/softwarePackageUpdatedAt",
+            "type": "string",
+            "title": "The softwarePackageUpdatedAt schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "0001-01-01T00:00:00Z"
+            ]
+        }
+    },
+    "additionalProperties": true
+}

@@ -1,0 +1,17 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+managedNodeGroups:
+- desiredCapacity: 2
+  instanceType: t2.small
+  maxSize: 2
+  minSize: 2
+  name: nodegroup
+  volumeSize: 100
+metadata:
+  name: eks-cluster-sandbox
+  region: us-east-2
+  version: '1.24'
+vpc:
+  cidr: 10.0.0.0/20
+  clusterEndpoints:
+    publicAccess: true

@@ -1,0 +1,27 @@
+from enum import Enum
+
+
+class AzureLocations(Enum):
+    AZURE_southcentralus = "azure:southcentralus"
+    AZURE_canadacentral = "azure:canadacentral"
+    AZURE_australiaeast = "azure:australiaeast"
+    AZURE_westeurope = "azure:westeurope"
+    AZURE_northeurope = "azure:northeurope"
+    AZURE_uksouth = "azure:uksouth"
+    AZURE_norwayeast = "azure:norwayeast"
+    AZURE_swedencentral = "azure:swedencentral"
+    AZURE_germanywestcentral = "azure:germanywestcentral"
+    AZURE_southafricanorth = "azure:southafricanorth"
+    AZURE_qatarcentral = "azure:qatarcentral"
+    AZURE_koreacentral = "azure:koreacentral"
+    AZURE_japaneast = "azure:japaneast"
+    AZURE_francecentral = "azure:francecentral"
+    AZURE_polandcentral = "azure:polandcentral"
+    AZURE_southeastasia = "azure:southeastasia"
+    AZURE_westus2 = "azure:westus2"
+    AZURE_westus3 = "azure:westus3"
+    AZURE_centralus = "azure:centralus"
+    AZURE_centralindia = "azure:centralindia"
+    AZURE_uaenorth = "azure:uaenorth"
+    AZURE_eastus2 = "azure:eastus2"
+    AZURE_eastus = "azure:eastus"

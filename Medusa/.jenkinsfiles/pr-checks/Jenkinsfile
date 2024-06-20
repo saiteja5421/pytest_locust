@@ -1,0 +1,35 @@
+pipeline {
+     agent {
+          label 'gate-check'
+     }
+
+     stages {
+          stage('Collect pytest tests') {
+               steps {
+                    sh """
+                    ls -la
+                    chmod +x Medusa/.jenkinsfiles/pr-checks/pytest-collect.sh
+                    ./Medusa/.jenkinsfiles/pr-checks/pytest-collect.sh
+                    """
+               }
+               
+          }
+          stage('Check formatting') {
+               steps {
+                    sh """
+                    ls -la
+                    chmod +x Medusa/.jenkinsfiles/pr-checks/formatting.sh
+                    ./Medusa/.jenkinsfiles/pr-checks/formatting.sh
+                    """
+               }
+          }
+          stage('Detect Secrets') {
+               steps {
+                    sh """
+                    chmod +x Medusa/.jenkinsfiles/pr-checks/detect-secrets.sh
+                    ./Medusa/.jenkinsfiles/pr-checks/detect-secrets.sh
+                    """
+               }
+          }
+     }
+}

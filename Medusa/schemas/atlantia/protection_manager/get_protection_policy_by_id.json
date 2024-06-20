@@ -1,0 +1,888 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "assigned": false,
+            "createdAt": "2019-07-21T17:32:28Z",
+            "createdBy": {
+                "id": "2a1172be-4281-44f9-848b-9c3f86378b13",
+                "name": "Admin"
+            },
+            "description": "Protection Policy protecting Finance department's Virtual Machines or datastores.",
+            "generation": 0,
+            "id": "c9cdeb6b-24cb-43c1-828a-e8b1b050f3f4",
+            "name": "Gold-Protection-Policy",
+            "policyType": "Predefined",
+            "protectionJobsInfo": [
+                {
+                    "id": "2a1172be-4281-44f9-848b-9c3f86378b14"
+                }
+            ],
+            "protections": [
+                {
+                    "copyPoolInfo": {
+                        "id": "2a1172be-4281-44f9-848b-9c3f86378b13",
+                        "name": "myStoragePool",
+                        "region": "US-East",
+                        "type": "Local"
+                    },
+                    "id": "2a1172be-4281-44f9-848b-9c3f86378b13",
+                    "schedules": [
+                        {
+                            "expireAfter": {
+                                "unit": "Hours",
+                                "value": 0
+                            },
+                            "id": 0,
+                            "lockFor": {
+                                "unit": "Hours",
+                                "value": 0
+                            },
+                            "name": "Hourly snapshot schedule",
+                            "namePattern": {
+                                "format": "Test_{SourceAssetName}_Copy_{DateFormat}"
+                            },
+                            "schedule": {
+                                "activeTime": {
+                                    "activeFromTime": "16:15",
+                                    "activeUntilTime": "20:15"
+                                },
+                                "recurrence": "ByMinutes",
+                                "repeatInterval": {
+                                    "every": 0,
+                                    "on": [
+                                        0
+                                    ]
+                                },
+                                "startTime": "16:35"
+                            },
+                            "sourceProtectionScheduleId": 0,
+                            "verify": false
+                        }
+                    ],
+                    "type": "Snapshot"
+                }
+            ],
+            "resourceUri": "string",
+            "type": "string",
+            "updatedAt": "2019-07-21T17:32:28Z"
+        }
+    ],
+    "required": [
+        "assigned",
+        "createdAt",
+        "createdBy",
+        "description",
+        "generation",
+        "id",
+        "name",
+        "policyType",
+        "protectionJobsInfo",
+        "protections",
+        "resourceUri",
+        "type",
+        "updatedAt"
+    ],
+    "properties": {
+        "assigned": {
+            "$id": "#/properties/assigned",
+            "type": "boolean",
+            "title": "The assigned schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": false,
+            "examples": [
+                false
+            ]
+        },
+        "createdAt": {
+            "$id": "#/properties/createdAt",
+            "type": "string",
+            "title": "The createdAt schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "2019-07-21T17:32:28Z"
+            ]
+        },
+        "createdBy": {
+            "$id": "#/properties/createdBy",
+            "type": "object",
+            "title": "The createdBy schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": {},
+            "examples": [
+                {
+                    "id": "2a1172be-4281-44f9-848b-9c3f86378b13",
+                    "name": "Admin"
+                }
+            ],
+            "required": [
+                "id",
+                "name"
+            ],
+            "properties": {
+                "id": {
+                    "$id": "#/properties/createdBy/properties/id",
+                    "type": "string",
+                    "title": "The id schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "2a1172be-4281-44f9-848b-9c3f86378b13"
+                    ]
+                },
+                "name": {
+                    "$id": "#/properties/createdBy/properties/name",
+                    "type": "string",
+                    "title": "The name schema",
+                    "description": "An explanation about the purpose of this instance.",
+                    "default": "",
+                    "examples": [
+                        "Admin"
+                    ]
+                }
+            },
+            "additionalProperties": true
+        },
+        "description": {
+            "$id": "#/properties/description",
+            "type": "string",
+            "title": "The description schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "Protection Policy protecting Finance department's Virtual Machines or datastores."
+            ]
+        },
+        "generation": {
+            "$id": "#/properties/generation",
+            "type": "integer",
+            "title": "The generation schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "id": {
+            "$id": "#/properties/id",
+            "type": "string",
+            "title": "The id schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "c9cdeb6b-24cb-43c1-828a-e8b1b050f3f4"
+            ]
+        },
+        "name": {
+            "$id": "#/properties/name",
+            "type": "string",
+            "title": "The name schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "Gold-Protection-Policy"
+            ]
+        },
+        "policyType": {
+            "$id": "#/properties/policyType",
+            "type": "string",
+            "title": "The policyType schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "Predefined"
+            ]
+        },
+        "protectionJobsInfo": {
+            "$id": "#/properties/protectionJobsInfo",
+            "type": "array",
+            "title": "The protectionJobsInfo schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "id": "2a1172be-4281-44f9-848b-9c3f86378b14"
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/protectionJobsInfo/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/protectionJobsInfo/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "id": "2a1172be-4281-44f9-848b-9c3f86378b14"
+                            }
+                        ],
+                        "required": [
+                            "id"
+                        ],
+                        "properties": {
+                            "id": {
+                                "$id": "#/properties/protectionJobsInfo/items/anyOf/0/properties/id",
+                                "type": "string",
+                                "title": "The id schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "2a1172be-4281-44f9-848b-9c3f86378b14"
+                                ]
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                ]
+            }
+        },
+        "protections": {
+            "$id": "#/properties/protections",
+            "type": "array",
+            "title": "The protections schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "copyPoolInfo": {
+                            "id": "2a1172be-4281-44f9-848b-9c3f86378b13",
+                            "name": "myStoragePool",
+                            "region": "US-East",
+                            "type": "Local"
+                        },
+                        "id": "2a1172be-4281-44f9-848b-9c3f86378b13",
+                        "schedules": [
+                            {
+                                "expireAfter": {
+                                    "unit": "Hours",
+                                    "value": 0
+                                },
+                                "id": 0,
+                                "lockFor": {
+                                    "unit": "Hours",
+                                    "value": 0
+                                },
+                                "name": "Hourly snapshot schedule",
+                                "namePattern": {
+                                    "format": "Test_{SourceAssetName}_Copy_{DateFormat}"
+                                },
+                                "schedule": {
+                                    "activeTime": {
+                                        "activeFromTime": "16:15",
+                                        "activeUntilTime": "20:15"
+                                    },
+                                    "recurrence": "ByMinutes",
+                                    "repeatInterval": {
+                                        "every": 0,
+                                        "on": [
+                                            0
+                                        ]
+                                    },
+                                    "startTime": "16:35"
+                                },
+                                "sourceProtectionScheduleId": 0,
+                                "verify": false
+                            }
+                        ],
+                        "type": "Snapshot"
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/protections/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/protections/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "copyPoolInfo": {
+                                    "id": "2a1172be-4281-44f9-848b-9c3f86378b13",
+                                    "name": "myStoragePool",
+                                    "region": "US-East",
+                                    "type": "Local"
+                                },
+                                "id": "2a1172be-4281-44f9-848b-9c3f86378b13",
+                                "schedules": [
+                                    {
+                                        "expireAfter": {
+                                            "unit": "Hours",
+                                            "value": 0
+                                        },
+                                        "id": 0,
+                                        "lockFor": {
+                                            "unit": "Hours",
+                                            "value": 0
+                                        },
+                                        "name": "Hourly snapshot schedule",
+                                        "namePattern": {
+                                            "format": "Test_{SourceAssetName}_Copy_{DateFormat}"
+                                        },
+                                        "schedule": {
+                                            "activeTime": {
+                                                "activeFromTime": "16:15",
+                                                "activeUntilTime": "20:15"
+                                            },
+                                            "recurrence": "ByMinutes",
+                                            "repeatInterval": {
+                                                "every": 0,
+                                                "on": [
+                                                    0
+                                                ]
+                                            },
+                                            "startTime": "16:35"
+                                        },
+                                        "sourceProtectionScheduleId": 0,
+                                        "verify": false
+                                    }
+                                ],
+                                "type": "Snapshot"
+                            }
+                        ],
+                        "required": [
+                            "copyPoolInfo",
+                            "id",
+                            "schedules",
+                            "type"
+                        ],
+                        "properties": {
+                            "copyPoolInfo": {
+                                "$id": "#/properties/protections/items/anyOf/0/properties/copyPoolInfo",
+                                "type": "object",
+                                "title": "The copyPoolInfo schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": {},
+                                "examples": [
+                                    {
+                                        "id": "2a1172be-4281-44f9-848b-9c3f86378b13",
+                                        "name": "myStoragePool",
+                                        "region": "US-East",
+                                        "type": "Local"
+                                    }
+                                ],
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "region",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "$id": "#/properties/protections/items/anyOf/0/properties/copyPoolInfo/properties/id",
+                                        "type": "string",
+                                        "title": "The id schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "2a1172be-4281-44f9-848b-9c3f86378b13"
+                                        ]
+                                    },
+                                    "name": {
+                                        "$id": "#/properties/protections/items/anyOf/0/properties/copyPoolInfo/properties/name",
+                                        "type": "string",
+                                        "title": "The name schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "myStoragePool"
+                                        ]
+                                    },
+                                    "region": {
+                                        "$id": "#/properties/protections/items/anyOf/0/properties/copyPoolInfo/properties/region",
+                                        "type": "string",
+                                        "title": "The region schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "US-East"
+                                        ]
+                                    },
+                                    "type": {
+                                        "$id": "#/properties/protections/items/anyOf/0/properties/copyPoolInfo/properties/type",
+                                        "type": "string",
+                                        "title": "The type schema",
+                                        "description": "An explanation about the purpose of this instance.",
+                                        "default": "",
+                                        "examples": [
+                                            "Local"
+                                        ]
+                                    }
+                                },
+                                "additionalProperties": true
+                            },
+                            "id": {
+                                "$id": "#/properties/protections/items/anyOf/0/properties/id",
+                                "type": "string",
+                                "title": "The id schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "2a1172be-4281-44f9-848b-9c3f86378b13"
+                                ]
+                            },
+                            "schedules": {
+                                "$id": "#/properties/protections/items/anyOf/0/properties/schedules",
+                                "type": "array",
+                                "title": "The schedules schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": [],
+                                "examples": [
+                                    [
+                                        {
+                                            "expireAfter": {
+                                                "unit": "Hours",
+                                                "value": 0
+                                            },
+                                            "id": 0,
+                                            "lockFor": {
+                                                "unit": "Hours",
+                                                "value": 0
+                                            },
+                                            "name": "Hourly snapshot schedule",
+                                            "namePattern": {
+                                                "format": "Test_{SourceAssetName}_Copy_{DateFormat}"
+                                            },
+                                            "schedule": {
+                                                "activeTime": {
+                                                    "activeFromTime": "16:15",
+                                                    "activeUntilTime": "20:15"
+                                                },
+                                                "recurrence": "ByMinutes",
+                                                "repeatInterval": {
+                                                    "every": 0,
+                                                    "on": [
+                                                        0
+                                                    ]
+                                                },
+                                                "startTime": "16:35"
+                                            },
+                                            "sourceProtectionScheduleId": 0,
+                                            "verify": false
+                                        }
+                                    ]
+                                ],
+                                "additionalItems": true,
+                                "items": {
+                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items",
+                                    "anyOf": [
+                                        {
+                                            "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0",
+                                            "type": "object",
+                                            "title": "The first anyOf schema",
+                                            "description": "An explanation about the purpose of this instance.",
+                                            "default": {},
+                                            "examples": [
+                                                {
+                                                    "expireAfter": {
+                                                        "unit": "Hours",
+                                                        "value": 0
+                                                    },
+                                                    "id": 0,
+                                                    "lockFor": {
+                                                        "unit": "Hours",
+                                                        "value": 0
+                                                    },
+                                                    "name": "Hourly snapshot schedule",
+                                                    "namePattern": {
+                                                        "format": "Test_{SourceAssetName}_Copy_{DateFormat}"
+                                                    },
+                                                    "schedule": {
+                                                        "activeTime": {
+                                                            "activeFromTime": "16:15",
+                                                            "activeUntilTime": "20:15"
+                                                        },
+                                                        "recurrence": "ByMinutes",
+                                                        "repeatInterval": {
+                                                            "every": 0,
+                                                            "on": [
+                                                                0
+                                                            ]
+                                                        },
+                                                        "startTime": "16:35"
+                                                    },
+                                                    "sourceProtectionScheduleId": 0,
+                                                    "verify": false
+                                                }
+                                            ],
+                                            "required": [
+                                                "expireAfter",
+                                                "id",
+                                                "lockFor",
+                                                "name",
+                                                "namePattern",
+                                                "schedule",
+                                                "sourceProtectionScheduleId",
+                                                "verify"
+                                            ],
+                                            "properties": {
+                                                "expireAfter": {
+                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/expireAfter",
+                                                    "type": "object",
+                                                    "title": "The expireAfter schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": {},
+                                                    "examples": [
+                                                        {
+                                                            "unit": "Hours",
+                                                            "value": 0
+                                                        }
+                                                    ],
+                                                    "required": [
+                                                        "unit",
+                                                        "value"
+                                                    ],
+                                                    "properties": {
+                                                        "unit": {
+                                                            "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/expireAfter/properties/unit",
+                                                            "type": "string",
+                                                            "title": "The unit schema",
+                                                            "description": "An explanation about the purpose of this instance.",
+                                                            "default": "",
+                                                            "examples": [
+                                                                "Hours"
+                                                            ]
+                                                        },
+                                                        "value": {
+                                                            "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/expireAfter/properties/value",
+                                                            "type": "integer",
+                                                            "title": "The value schema",
+                                                            "description": "An explanation about the purpose of this instance.",
+                                                            "default": 0,
+                                                            "examples": [
+                                                                0
+                                                            ]
+                                                        }
+                                                    },
+                                                    "additionalProperties": true
+                                                },
+                                                "id": {
+                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/id",
+                                                    "type": "integer",
+                                                    "title": "The id schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": 0,
+                                                    "examples": [
+                                                        0
+                                                    ]
+                                                },
+                                                "lockFor": {
+                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/lockFor",
+                                                    "type": "object",
+                                                    "title": "The lockFor schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": {},
+                                                    "examples": [
+                                                        {
+                                                            "unit": "Hours",
+                                                            "value": 0
+                                                        }
+                                                    ],
+                                                    "required": [
+                                                        "unit",
+                                                        "value"
+                                                    ],
+                                                    "properties": {
+                                                        "unit": {
+                                                            "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/lockFor/properties/unit",
+                                                            "type": "string",
+                                                            "title": "The unit schema",
+                                                            "description": "An explanation about the purpose of this instance.",
+                                                            "default": "",
+                                                            "examples": [
+                                                                "Hours"
+                                                            ]
+                                                        },
+                                                        "value": {
+                                                            "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/lockFor/properties/value",
+                                                            "type": "integer",
+                                                            "title": "The value schema",
+                                                            "description": "An explanation about the purpose of this instance.",
+                                                            "default": 0,
+                                                            "examples": [
+                                                                0
+                                                            ]
+                                                        }
+                                                    },
+                                                    "additionalProperties": true
+                                                },
+                                                "name": {
+                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/name",
+                                                    "type": "string",
+                                                    "title": "The name schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": "",
+                                                    "examples": [
+                                                        "Hourly snapshot schedule"
+                                                    ]
+                                                },
+                                                "namePattern": {
+                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/namePattern",
+                                                    "type": "object",
+                                                    "title": "The namePattern schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": {},
+                                                    "examples": [
+                                                        {
+                                                            "format": "Test_{SourceAssetName}_Copy_{DateFormat}"
+                                                        }
+                                                    ],
+                                                    "required": [
+                                                        "format"
+                                                    ],
+                                                    "properties": {
+                                                        "format": {
+                                                            "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/namePattern/properties/format",
+                                                            "type": "string",
+                                                            "title": "The format schema",
+                                                            "description": "An explanation about the purpose of this instance.",
+                                                            "default": "",
+                                                            "examples": [
+                                                                "Test_{SourceAssetName}_Copy_{DateFormat}"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "additionalProperties": true
+                                                },
+                                                "schedule": {
+                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule",
+                                                    "type": "object",
+                                                    "title": "The schedule schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": {},
+                                                    "examples": [
+                                                        {
+                                                            "activeTime": {
+                                                                "activeFromTime": "16:15",
+                                                                "activeUntilTime": "20:15"
+                                                            },
+                                                            "recurrence": "ByMinutes",
+                                                            "repeatInterval": {
+                                                                "every": 0,
+                                                                "on": [
+                                                                    0
+                                                                ]
+                                                            },
+                                                            "startTime": "16:35"
+                                                        }
+                                                    ],
+                                                    "required": [
+                                                        "activeTime",
+                                                        "recurrence",
+                                                        "repeatInterval",
+                                                        "startTime"
+                                                    ],
+                                                    "properties": {
+                                                        "activeTime": {
+                                                            "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule/properties/activeTime",
+                                                            "type": "object",
+                                                            "title": "The activeTime schema",
+                                                            "description": "An explanation about the purpose of this instance.",
+                                                            "default": {},
+                                                            "examples": [
+                                                                {
+                                                                    "activeFromTime": "16:15",
+                                                                    "activeUntilTime": "20:15"
+                                                                }
+                                                            ],
+                                                            "required": [
+                                                                "activeFromTime",
+                                                                "activeUntilTime"
+                                                            ],
+                                                            "properties": {
+                                                                "activeFromTime": {
+                                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule/properties/activeTime/properties/activeFromTime",
+                                                                    "type": "string",
+                                                                    "title": "The activeFromTime schema",
+                                                                    "description": "An explanation about the purpose of this instance.",
+                                                                    "default": "",
+                                                                    "examples": [
+                                                                        "16:15"
+                                                                    ]
+                                                                },
+                                                                "activeUntilTime": {
+                                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule/properties/activeTime/properties/activeUntilTime",
+                                                                    "type": "string",
+                                                                    "title": "The activeUntilTime schema",
+                                                                    "description": "An explanation about the purpose of this instance.",
+                                                                    "default": "",
+                                                                    "examples": [
+                                                                        "20:15"
+                                                                    ]
+                                                                }
+                                                            },
+                                                            "additionalProperties": true
+                                                        },
+                                                        "recurrence": {
+                                                            "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule/properties/recurrence",
+                                                            "type": "string",
+                                                            "title": "The recurrence schema",
+                                                            "description": "An explanation about the purpose of this instance.",
+                                                            "default": "",
+                                                            "examples": [
+                                                                "ByMinutes"
+                                                            ]
+                                                        },
+                                                        "repeatInterval": {
+                                                            "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule/properties/repeatInterval",
+                                                            "type": "object",
+                                                            "title": "The repeatInterval schema",
+                                                            "description": "An explanation about the purpose of this instance.",
+                                                            "default": {},
+                                                            "examples": [
+                                                                {
+                                                                    "every": 0,
+                                                                    "on": [
+                                                                        0
+                                                                    ]
+                                                                }
+                                                            ],
+                                                            "required": [
+                                                                "every",
+                                                                "on"
+                                                            ],
+                                                            "properties": {
+                                                                "every": {
+                                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule/properties/repeatInterval/properties/every",
+                                                                    "type": "integer",
+                                                                    "title": "The every schema",
+                                                                    "description": "An explanation about the purpose of this instance.",
+                                                                    "default": 0,
+                                                                    "examples": [
+                                                                        0
+                                                                    ]
+                                                                },
+                                                                "on": {
+                                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule/properties/repeatInterval/properties/on",
+                                                                    "type": "array",
+                                                                    "title": "The on schema",
+                                                                    "description": "An explanation about the purpose of this instance.",
+                                                                    "default": [],
+                                                                    "examples": [
+                                                                        [
+                                                                            0
+                                                                        ]
+                                                                    ],
+                                                                    "additionalItems": true,
+                                                                    "items": {
+                                                                        "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule/properties/repeatInterval/properties/on/items",
+                                                                        "anyOf": [
+                                                                            {
+                                                                                "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule/properties/repeatInterval/properties/on/items/anyOf/0",
+                                                                                "type": "integer",
+                                                                                "title": "The first anyOf schema",
+                                                                                "description": "An explanation about the purpose of this instance.",
+                                                                                "default": 0,
+                                                                                "examples": [
+                                                                                    0
+                                                                                ]
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            },
+                                                            "additionalProperties": true
+                                                        },
+                                                        "startTime": {
+                                                            "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/schedule/properties/startTime",
+                                                            "type": "string",
+                                                            "title": "The startTime schema",
+                                                            "description": "An explanation about the purpose of this instance.",
+                                                            "default": "",
+                                                            "examples": [
+                                                                "16:35"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "additionalProperties": true
+                                                },
+                                                "sourceProtectionScheduleId": {
+                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/sourceProtectionScheduleId",
+                                                    "type": "integer",
+                                                    "title": "The sourceProtectionScheduleId schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": 0,
+                                                    "examples": [
+                                                        0
+                                                    ]
+                                                },
+                                                "verify": {
+                                                    "$id": "#/properties/protections/items/anyOf/0/properties/schedules/items/anyOf/0/properties/verify",
+                                                    "type": "boolean",
+                                                    "title": "The verify schema",
+                                                    "description": "An explanation about the purpose of this instance.",
+                                                    "default": false,
+                                                    "examples": [
+                                                        false
+                                                    ]
+                                                }
+                                            },
+                                            "additionalProperties": true
+                                        }
+                                    ]
+                                }
+                            },
+                            "type": {
+                                "$id": "#/properties/protections/items/anyOf/0/properties/type",
+                                "type": "string",
+                                "title": "The type schema",
+                                "description": "An explanation about the purpose of this instance.",
+                                "default": "",
+                                "examples": [
+                                    "Snapshot"
+                                ]
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                ]
+            }
+        },
+        "resourceUri": {
+            "$id": "#/properties/resourceUri",
+            "type": "string",
+            "title": "The resourceUri schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "type": {
+            "$id": "#/properties/type",
+            "type": "string",
+            "title": "The type schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "updatedAt": {
+            "$id": "#/properties/updatedAt",
+            "type": "string",
+            "title": "The updatedAt schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "2019-07-21T17:32:28Z"
+            ]
+        }
+    },
+    "additionalProperties": true
+}

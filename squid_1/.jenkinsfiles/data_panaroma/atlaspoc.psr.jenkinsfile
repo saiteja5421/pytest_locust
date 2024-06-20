@@ -1,0 +1,179 @@
+pipeline {
+    agent {
+        label 'PSR-Vaas-Agent'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder logRotator(artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '7',
+                daysToKeepStr: '',
+                numToKeepStr: '7')
+        skipDefaultCheckout()
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+         string(defaultValue: 'master',
+                description: 'Default value is master, type your branch name if you want to run build on specific branch',
+                name: 'BRANCH_NAME',
+                trim: true)
+        booleanParam(defaultValue: true,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: 'DSE-DataObservability-PQA <DSE-DataObservability-PQA@hpe.com>',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Grafana Portal',
+                name: 'ENABLE_GRAFANA_REPORT')
+        string(defaultValue: '--users=150 --run-time=15m',
+                description: 'Run with given number of usre ',
+                name: 'USER_CONFIG',
+                trim: true)
+    }
+
+    environment {
+        CONTAINER_NAME = "pano_psr"
+        IMAGE_NAME = "hub.docker.hpecorp.net/atlas-qa/atlantia-psr"
+        PARENT_DIR = "/workspaces/qa_automation"
+        GRAFANA_REPORT_CMD = "--timescale --grafana-url=http://172.21.142.229:8080 --pghost=172.21.142.229 --pgport=5432 --pgpassword=password --pguser=postgres"
+    }
+
+    stages {
+        stage('Checkout Repository') {
+            steps {
+                cleanWs()
+                sh "echo Checkout ${params.BRANCH_NAME} Branch"
+                git branch: "${params.BRANCH_NAME}", credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/qa_automation.git'
+            }
+        }
+        stage('Remove Docker Container if already running') {
+            steps {
+                script {
+                    def containerName = "${env.CONTAINER_NAME}" // Replace with your container's name
+                    
+                    try {
+                        // Check if the container is running
+                        def isRunning = sh(script: "docker inspect -f '{{.State.Running}}' $containerName", returnStatus: true)
+                        
+                        if (isRunning == 0) {
+                            // Stop and remove the container
+                            sh "docker stop $containerName"
+                            sh "docker rm $containerName"
+                            echo "Stopped and removed the Docker container."
+                        } else {
+                            echo "No running container found with the name $containerName."
+                        }
+                    } catch (Exception e) {
+                        echo "An error occurred while checking/removing the Docker container: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                    }
+                }
+            }
+        }
+        stage('Copy config file') 
+        {
+            steps
+            {
+                withCredentials([file(credentialsId: 'config_multiuser_panorama', variable: 'CONFIG_YML')]) {
+                sh '''
+                cp $CONFIG_YML $WORKSPACE/Squid/config_datapanorama_jenkins.yml
+                chmod +x $WORKSPACE/Squid/config_datapanorama_jenkins.yml
+                '''
+                }
+
+            }
+        }
+        
+        stage('Run PSR- tests') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        sh "ls -lart $WORKSPACE/Squid"
+                        def command = "docker run --pull always -w ${env.PARENT_DIR} --name ${env.CONTAINER_NAME} -e LOCUST_HOST='https://atlaspoc-app.qa.cds.hpe.com' -e CONFIG_FILE_PATH=${env.PARENT_DIR}/Squid/config_datapanorama_jenkins.yml -v $WORKSPACE:${env.PARENT_DIR} $IMAGE_NAME:latest locust -f Squid/tests/datapanorama/test_perf_atlaspoc.py --config=Squid/tests/s3_locust.conf --headless --csv=psr"
+                        if (params.ENABLE_GRAFANA_REPORT) {  
+                            sh "${command} ${params.USER_CONFIG} ${env.GRAFANA_REPORT_CMD}"
+                        } 
+                        else {
+                             sh "${command} ${params.USER_CONFIG}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+        
+    post {
+        always {
+            script {
+                sh "ls -lart $WORKSPACE"
+                if (params.SEND_EMAILS) {
+                    // def junitResult = junit '**/psr_stats.csv'
+
+                    def summary = "PSR test with ${params.USER_CONFIG}"
+                    def emailSubject = "${env.JOB_NAME} ${env.BUILD_NUMBER} - Status  ${summary}"
+                    def emailBodyTemplate = """
+                    Test Summary: ${summary}
+                    
+                    Build ran on branch: ${params.BRANCH_NAME}
+ 
+                    Link to build: ${env.BUILD_URL}
+                    Link to console: ${env.BUILD_URL}console
+                    ------------------
+                    """.stripIndent()
+
+                    //emailBodyTemplate += summary
+
+                    // mail body: emailBodyTemplate, subject: emailSubject, to: params.EMAIL_LIST
+                    
+                    emailext (
+                        attachmentsPattern: "**/psr_*.*", 
+                        body: emailBodyTemplate, 
+                        subject: emailSubject, 
+                        mimeType: 'text/html',
+                        to: params.EMAIL_LIST
+                    )
+                }
+                
+                try {
+                    echo "Attempting to stop ${env.CONTAINER_NAME} container:"
+                    sh "docker stop ${env.CONTAINER_NAME}"
+                    echo "${env.CONTAINER_NAME} stopped."
+                } catch (err) {
+                    echo "Container ${env.CONTAINER_NAME} is not running."
+                }
+                
+                try {
+                    echo "Attempting to remove ${env.CONTAINER_NAME} container:"
+                    sh "docker rm ${env.CONTAINER_NAME}"
+                    echo "${env.CONTAINER_NAME} removed."
+                } catch (err) {
+                    echo "Container ${env.CONTAINER_NAME} does not exist."
+                }
+
+                try {
+                    echo "Attempting to remove dangling images using 'docker image prune -f'"
+                    sh "docker image prune -f"
+                    echo "Removed dangling images"
+                } catch (err) {
+                    echo "Failed to remove dangling images from the system"
+                }
+
+                cleanWs()
+
+                color = [SUCCESS: "good",
+                         FAILURE: "danger"]
+                        .get(currentBuild.currentResult, "warning")
+
+                // Send notification to slack
+                slackSend (message: "${env.JOB_NAME} ${env.BUILD_NUMBER} - PSR Test Results",
+                          channel: 'data_observability_pqa_tests',
+                          teamDomain: 'hpe-internal',
+                          tokenCredentialId: 'slack-notificaitons',
+                          color: "${color}",
+                          iconEmoji: ':hpe-bot')
+            }
+        }
+    }
+}

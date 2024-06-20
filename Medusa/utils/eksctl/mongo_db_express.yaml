@@ -1,0 +1,174 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-sc-mongodb
+provisioner: ebs.csi.aws.com # kubernetes.io/aws-ebs
+parameters:
+  type: gp3 # gp2
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mongo-db-app
+---
+apiVersion: v1
+kind: Secret
+metadata:
+    name: mongodb-secret
+    namespace: mongo-db-app
+type: Opaque
+data:
+    mongo-root-username: dXNlcm5hbWU=
+    mongo-root-password: cGFzc3dvcmQ=
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-pvc
+  namespace: mongo-db-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ebs-sc-mongodb
+  resources:
+    requests:
+      storage: 100Gi
+---      
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-deployment
+  namespace: mongo-db-app
+  labels:
+    app: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongo-root-username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom: 
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongo-root-password
+        volumeMounts:
+        - name: mongo-persistent-storage
+          mountPath: /data/db
+      volumes:
+        - name: mongo-persistent-storage
+          persistentVolumeClaim:
+            claimName: mongo-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+  namespace: mongo-db-app
+spec:
+  selector:
+    app: mongodb
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongodb-configmap
+  namespace: mongo-db-app
+data:
+  database_url: mongodb-service
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongo-express-pvc
+  namespace: mongo-db-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ebs-sc-mongodb
+  resources:
+    requests:
+      storage: 100Gi
+---      
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-express
+  namespace: mongo-db-app
+  labels:
+    app: mongo-express
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        app: mongo-express
+    spec:
+      containers:
+      - name: mongo-express
+        image: mongo-express
+        ports:
+        - containerPort: 8081
+        env:
+        - name: ME_CONFIG_MONGODB_ADMINUSERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongo-root-username
+        - name: ME_CONFIG_MONGODB_ADMINPASSWORD
+          valueFrom: 
+            secretKeyRef:
+              name: mongodb-secret
+              key: mongo-root-password
+        - name: ME_CONFIG_MONGODB_SERVER
+          valueFrom: 
+            configMapKeyRef:
+              name: mongodb-configmap
+              key: database_url
+        volumeMounts:
+          - name: mongo-express-persistent-storage
+            mountPath: /data/db
+      volumes:
+        - name: mongo-express-persistent-storage
+          persistentVolumeClaim:
+            claimName: mongo-express-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express-service
+  namespace: mongo-db-app
+spec:
+  selector:
+    app: mongo-express
+  type: LoadBalancer  
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+      nodePort: 30000

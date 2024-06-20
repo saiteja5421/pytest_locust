@@ -1,0 +1,5 @@
+ACCOUNT:
+  Cluster: scdev01-app.qa.cds.hpe.com
+  Username: s3auto
+  client_id: xxxxxxxxxxxxxxxxxxxxxxxxxxx
+  client_secret: xxxxxxxxxxxxxxxxxxxxxxxxx

@@ -1,0 +1,89 @@
+{
+    "metrics": {
+        "iterations": {
+            "count": 10,
+            "rate": 72.36439816339158
+        },
+        "checks": {
+            "fails": 10,
+            "passes": 30,
+            "value": 0.75
+        },
+        "group_duration": {
+            "avg": 0.079665,
+            "min": 0,
+            "med": 0,
+            "max": 0.5601,
+            "p(90)": 0.51252,
+            "p(95)": 0.5236200000000001
+        },
+        "data_sent": {
+            "count": 0,
+            "rate": 0
+        },
+        "data_received": {
+            "count": 0,
+            "rate": 0
+        },
+        "iteration_duration": {
+            "min": 0,
+            "med": 0.04985,
+            "max": 1.0064,
+            "p(90)": 0.6427999999999999,
+            "p(95)": 0.8245999999999996,
+            "avg": 0.28511000000000003
+        }
+    },
+    "root_group": {
+        "groups": {
+            "Create Catalyst gateway VM": {
+                "name": "Create Catalyst gateway VM",
+                "path": "::Create Catalyst gateway VM",
+                "id": "4bfab5e86e2dd6fa32af5357eec96350",
+                "groups": {},
+                "checks": {
+                        "Test check": {
+                            "name": "Test check",
+                            "path": "::Create Catalyst gateway VM::Test check",
+                            "id": "fee04b1ad84a2122cc29ec961ac622ea",
+                            "passes": 10,
+                            "fails": 0
+                        },
+                        "TestResult=> Create Catalyst gateway VM": {
+                            "name": "TestResult=> Create Catalyst gateway VM",
+                            "path": "::Create Catalyst gateway VM::TestResult=> Create Catalyst gateway VM",
+                            "id": "16e9110daf37a6168c133778103a674f",
+                            "passes": 10,
+                            "fails": 0
+                        }
+                    }
+            },
+            "List Catalyst gateway VM": {
+                "name": "List Catalyst gateway VM",
+                "path": "::List Catalyst gateway VM",
+                "id": "57c60876c6dd6132854129c4d9789636",
+                "groups": {},
+                "checks": {
+                        "Test check": {
+                            "name": "Test check",
+                            "path": "::List Catalyst gateway VM::Test check",
+                            "id": "38fd3ae5739f82deaf739fe61dbe6a22",
+                            "passes": 0,
+                            "fails": 10
+                        },
+                        "TestResult=> List VM completed": {
+                            "name": "TestResult=> List VM completed",
+                            "path": "::List Catalyst gateway VM::TestResult=> List VM completed",
+                            "id": "4e4047400c715c1e17a0da1f78ee091a",
+                            "passes": 10,
+                            "fails": 0
+                        }
+                    }
+            }
+        },
+        "checks": {},
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e"
+    }
+}

@@ -1,0 +1,147 @@
+@Library('sc-jenkins-pipeline-shared') _
+
+pipeline {
+    agent {
+        kubernetes {
+            inheritFrom 'tests-medusa'
+            defaultContainer 'tests-medusa'
+              yaml '''
+              spec:
+                containers:
+                - name: tests-medusa
+                  resourceRequestCpu: "100m"
+                  resourceRequestMemory: "256Mi"
+                  resourceRequestEphemeralStorage: "1024Mi"
+                  image: hub.docker.hpecorp.net/atlantia-qa/regression:atlantia-e2e
+                  imagePullPolicy: Always
+                  command: ["tail"]
+                  args: ["-f", "/dev/null"]
+                  ttyEnabled: true
+                - name: jnlp
+                  resourceRequestEphemeralStorage: "1024Mi"
+                  resources:
+                    requests:
+                        ephemeral-storage: "1024Mi"
+        '''
+        }
+    }
+
+    options {
+        // keep last 50 builds
+        buildDiscarder(
+            logRotator(numToKeepStr: '50')
+        )
+
+        skipDefaultCheckout true
+
+        timestamps()
+    }
+
+    triggers {
+        cron 'H 06 * * *'
+    }
+
+    parameters {
+        string(defaultValue: 'refs/tags/v3.3-scint',
+                description: 'Default value is tags/v3.3-scint, type your tag name if you want to run build using a specific tag',
+                name: 'TAG',
+                trim: true)
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Report Portal flag',
+                name: 'ENABLE_REPORT_PORTAL')
+    }
+
+    environment {
+        SERVICE_VERSION = 'service2'
+        CONFIG_FILE = 'variables_minimal_sanity_scint'
+        HTTPS_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        HTTP_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        NO_PROXY = '127.0.0.1,localhost,.nimblestorage.com,10.0.0.0/8'
+    }
+
+    stages {
+        stage("Run Minimal Sanity Suite") {
+            steps {
+                dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {	
+                    script {
+                        withCredentials([[
+                            $class: 'AmazonWebServicesCredentialsBinding',
+                            accessKeyVariable: 'ACCOUNT_ONE_AWS_KEY_ID',
+                            credentialsId: '686690026376',
+                            secretKeyVariable: 'ACCOUNT_ONE_AWS_SECRET_KEY'
+                        ]]) {
+                            withCredentials([[
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                accessKeyVariable: 'ACCOUNT_TWO_AWS_KEY_ID',
+                                credentialsId: '686690026376',
+                                secretKeyVariable: 'ACCOUNT_TWO_AWS_SECRET_KEY'
+                            ]]) {
+                                try {
+                                    dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {
+                                        checkout(
+                                            [$class: 'GitSCM',
+                                            branches: [[name: "${params.TAG}"]],
+                                            extensions: [[$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true, timeout: 30]], 
+                                            userRemoteConfigs: [[credentialsId: 'nimble-dcs-org', url: 'https://github.hpe.com/nimble/qa_automation.git']]]
+                                        )
+                                        dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {
+                                            withCredentials([string(credentialsId: 'user_one_scint_sanity_minimal', variable: 'USER_ONE_CRED'), string(credentialsId: 'user_two_scint_sanity_minimal', variable: 'USER_TWO_CRED')]) {        
+                                            // Execute Python script to update the client and secret ids in the config file
+                                                sh '''
+                                                python3 Medusa/utils/update_config_file.py variables_minimal_sanity_scint.ini admin $USER_ONE_CRED $USER_TWO_CRED
+                                                '''                        
+                                            }
+                                        }
+                                        dir("${env.WORKSPACE}-${env.BUILD_NUMBER}/Medusa") {
+                                            withCredentials([string(credentialsId: 'RP_API_KEY_2', variable: 'RP_API_KEY')]) {
+                                                def rp_description = "'Atlantia Mini-SCINT B&R sanity build: ${env.BUILD_NUMBER}'"
+                                                def command = "pytest -sv -c configs/atlantia/pytest/pytest_minimal_sanity_scint.ini --junitxml=logs/junit.xml"
+                                                if (params.ENABLE_REPORT_PORTAL) {
+                                                    sh "${command} --reportportal --rp-launch-description ${rp_description} tests/e2e/aws_protection/test_sanity/minimal_dualauth"
+                                                } else {
+                                                    sh "${command} tests/e2e/aws_protection/test_sanity/minimal_dualauth"
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    echo "Error ${e}"
+                                }
+
+                                containerLog 'tests-medusa'
+
+                                try {
+                                    echo "Attempting to archive test logs"
+                                    archiveArtifacts artifacts: "Medusa/logs/test_run.log", followSymlinks: false
+                                } catch (Exception e) {
+                                    echo "Logs are not present in container Medusa/logs/test_run.log, unable to export artifact."
+                                    echo "Error ${e}"
+                                }
+
+                                def testResults = ""
+
+                                try {
+                                    echo "Attempting to extract junit xml report from Medusa/logs/junit.xml container:"
+                                    def summary = junit allowEmptyResults: true, healthScaleFactor: 0.0, skipPublishingChecks: true, testResults: "Medusa/logs/junit.xml"
+                                    testResults = "\nTest Summary\n---\nTotal: ${summary.totalCount}\nPassed: ${summary.passCount}\nFailures: ${summary.failCount}\nSkipped: ${summary.skipCount}"
+                                } catch  (Exception e) {
+                                    echo "XML test report is not present in container ${env.CONTAINER_NAME}, unable to extract results."
+                                    echo "Error ${e}"
+                                }
+                                currentBuild.description = testResults
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                cleanWs()
+                chatNotification(channel: 'jenkins_sc_pqa_notification')
+            }
+        }
+    }
+}

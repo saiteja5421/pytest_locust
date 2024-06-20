@@ -1,0 +1,20 @@
+ERROR = "connection reset by peer"
+JOB_NAME = 'Atlas_CFT_test'
+def error_build_count =0
+def error_occurence_count =0
+
+def job = Jenkins.instance.items.find { it.name == JOB_NAME }
+for (build in job.builds) {
+  def log = build.log  
+  if (log.contains(ERROR)) {
+    //println "${job.name}: ${build.id}  : ${Jenkins.instance.getRootUrl()}${job.getUrl()}${build.id}"
+    println "Issue [${ERROR}] observed in build => ${build.getTime()} => ${Jenkins.instance.getRootUrl()}${job.getUrl()}${build.id}"
+    error_build_count = error_build_count + 1
+    println("Number of times the error occurred in this build ${build.id} is : ${log.count(ERROR)}")
+    error_occurence_count = error_occurence_count + log.count(ERROR)
+    
+  }
+}
+
+println "Total Number of builds the issue occurs : ${error_build_count}"
+println "Total Number of the occurrence the issue occurs is : ${error_occurence_count}"

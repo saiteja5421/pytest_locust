@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nginx-static-ns
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nginx-static-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-static-claim
+  namespace: nginx-static-ns
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-static-pod
+  namespace: nginx-static-ns
+spec:
+  volumes:
+    - name: nginx-static-storage
+      persistentVolumeClaim:
+        claimName: nginx-static-claim
+  containers:
+    - name: nginx-static-container
+      image: nginx
+      ports:
+        - containerPort: 80
+          name: "http-server"
+      volumeMounts:
+        - mountPath: "/usr/share/nginx/html"
+          name: nginx-static-storage

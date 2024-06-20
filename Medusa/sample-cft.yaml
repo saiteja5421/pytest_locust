@@ -1,0 +1,376 @@
+# (c) Copyright 2021-2022 Hewlett Packard Enterprise Development LP
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This template creates the roles and policies required for Data Services Cloud Console to manage a customer AWS account
+Parameters:
+  dsccAwsAccount:
+    Type: String
+    Description: The HPE Data Services Cloud Console account
+  cVsaAwsAccount:
+    Type: String
+    Description: The HPE Cloud VSA Service account
+  externalId:
+    Type: String
+    Description: The unique ID assigned to the customer by HPE Data Services Cloud Console
+
+Resources:
+  # Cloud Account Manager Role & Policy for validating the IAM configuration of a
+  # customer account.
+  HpeCamConfigurationValidatorRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: "hpe-cam-configuration-validator"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${dsccAwsAccount}:root'
+            Condition: 
+              StringEquals:
+                sts:ExternalId: !Ref externalId
+        Version: 2012-10-17
+
+  HpeCamIamRoleAndPolicyValidation:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: Policy that allows for the reading of HPE Cloud Account Manager roles and policies
+      ManagedPolicyName: hpe-cam-iam-role-and-policy-validation
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'iam:GetPolicy'
+              - 'iam:GetPolicyVersion'
+              - 'iam:GetRole'
+              - 'iam:GetRolePolicy'
+              - 'iam:ListAttachedRolePolicies'
+              - 'iam:ListRolePolicies'
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/hpe-cam-*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/hpe-cam-*'
+          - Effect: Allow
+            Action:
+              - 'iam:ListRoles'
+            Resource:
+              - '*'
+      Roles:
+        - !Ref HpeCamConfigurationValidatorRole
+
+  # Cloud Account Manager Role & Policy for unregistering the customer account from
+  # DSCC by deleting the IAM roles and policies created by this template
+  HpeCamAccountUnregistrarRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: "hpe-cam-account-unregistrar"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${dsccAwsAccount}:root'
+            Condition: 
+              StringEquals:
+                sts:ExternalId: !Ref externalId
+        Version: 2012-10-17
+
+  HpeCamIamRoleAndPolicyDeletion:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: Policy that allows for the deletion of HPE Cloud Account Manager roles and policies
+      ManagedPolicyName: hpe-cam-iam-role-and-policy-deletion
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'iam:GetPolicy'
+              - 'iam:GetPolicyVersion'
+              - 'iam:GetRole'
+              - 'iam:GetRolePolicy'
+              - 'iam:ListAttachedRolePolicies'
+              - 'iam:ListRolePolicies'
+              - 'iam:DeletePolicy'
+              - 'iam:DeletePolicyVersion'
+              - 'iam:DeleteRole'
+              - 'iam:DeleteRolePolicy'
+            Resource:
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:policy/hpe-cam-*'
+              - !Sub 'arn:aws:iam::${AWS::AccountId}:role/hpe-cam-*'
+          - Effect: Allow
+            Action:
+              - 'iam:ListRoles'
+            Resource:
+              - '*'
+      Roles:
+        - !Ref HpeCamAccountUnregistrarRole
+
+  # Inventory Manager Role & Policy for performing inventory sync and configuring tags
+  HpeCamInventoryManagerRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: "hpe-cam-inventory-manager"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${dsccAwsAccount}:root'
+            Condition: 
+              StringEquals:
+                sts:ExternalId: !Ref externalId
+        Version: 2012-10-17
+
+  HpeCamInventoryManager:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: Policy that allows for the reading EC2 inventory and management of tags
+      ManagedPolicyName: hpe-cam-inventory-manager
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'ec2:DescribeAddresses'
+              - 'ec2:DescribeInstances'
+              - 'ec2:DescribeSnapshots'
+              - 'ec2:DescribeSubnets'
+              - 'ec2:DescribeVolumes'
+              - 'ec2:DescribeVpcs'
+            Resource:
+              - 'arn:aws:ec2:::*'
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateTags'
+              - 'ec2:DeleteTags'
+            Resource:
+              - 'arn:aws:ec2:::instance/*'
+              - 'arn:aws:ec2:::volume/*'
+      Roles:
+        - !Ref HpeCamInventoryManagerRole
+
+  # Backup Manager Role & Policy for managing backup operations
+  HpeCamBackupManagerRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: "hpe-cam-backup-manager"
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${dsccAwsAccount}:root'
+            Condition: 
+              StringEquals:
+                sts:ExternalId: !Ref externalId
+        Version: 2012-10-17
+
+  HpeCamBackupManager:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: Policy that allows for creation of snapshots for backup
+      ManagedPolicyName: hpe-cam-backup-manager
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateSnapshot'
+              - 'ec2:DescribeSnapshots'
+            Resource:
+              - 'arn:aws:ec2:::snapshot/*'
+              - 'arn:aws:ec2:::volume/*'
+          - Effect: Allow
+            Action:
+              - 'ec2:DeleteSnapshot'
+            Resource:
+              - 'arn:aws:ec2:::snapshot/hpe-*'
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateImage'
+              - 'ec2:DescribeImages'
+              - 'ec2:DeregisterImage'
+            Resource:
+              - 'arn:aws:ec2:::image/*'
+              - 'arn:aws:ec2:::instance/*'
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateTags'
+              - 'ec2:DeleteTags'
+            Resource:
+              - 'arn:aws:ec2:::instance/*'
+              - 'arn:aws:ec2:::volume/*'
+          - Effect: Allow
+            Action:
+              - 'ebs:ListSnapshotBlocks'
+            Resource:
+              - 'arn:aws:ec2:::snapshot/*'
+      Roles:
+        - !Ref HpeCamBackupManagerRole
+
+  # Data Extractor Role & Policy for extracting snapshot data
+  HpeCamDataExtractorRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: "hpe-cam-data-extractor"
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${cVsaAwsAccount}:root'
+            Condition: 
+              StringEquals:
+                sts:ExternalId: !Ref externalId
+        Version: 2012-10-17
+
+  HpeCamDataExtraction:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: Policy that allows for the reading snapshot data
+      ManagedPolicyName: hpe-cam-data-extraction
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'ebs:ListSnapshotBlocks'
+              - 'ebs:ListChangedBlocks'
+              - 'ebs:GetSnapshotBlock'
+            Resource:
+              - 'arn:aws:ec2:::snapshot/*'
+      Roles:
+        - !Ref HpeCamDataExtractorRole
+
+  # Restore Manager Role & Policy for managing restore operations
+  HpeCamRestoreManagerRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: "hpe-cam-restore-manager"
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${dsccAwsAccount}:root'
+            Condition: 
+              StringEquals:
+                sts:ExternalId: !Ref externalId
+        Version: 2012-10-17
+
+  HpeCamRestoreManager:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: Policy that allows for the creation of volumes for restores
+      ManagedPolicyName: hpe-cam-restore-manager
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'ebs:StartSnapshot'
+              - 'ebs:CompleteSnapshot'
+            Resource:
+              - 'arn:aws:ec2:::snapshot/*'
+          - Effect: Allow
+            Action:
+              - 'ec2:AttachVolume'
+              - 'ec2:StopInstances'
+              - 'ec2:TerminateInstances'
+            Resource:
+              - 'arn:aws:ec2:::instance/*'
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateVolume'
+              - 'ec2:DeleteVolume'
+              - 'ec2:DetachVolume'
+            Resource:
+              - 'arn:aws:ec2:::volume/*'
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateTags'
+              - 'ec2:DeleteTags'
+            Resource:
+              - 'arn:aws:ec2:::instance/*'
+              - 'arn:aws:ec2:::volume/*'
+          - Effect: Allow
+            Action:
+              - 'ec2:RunInstances'
+            Resource:
+              - 'arn:aws:ec2:::image/*'
+          - Effect: Allow
+            Action:
+              - 'ec2:AssociateAddress'
+              - 'ec2:DisassociateAddress'
+            Resource:
+              - 'arn:aws:ec2:::elastic-ip/*'
+              - 'arn:aws:ec2:::network-interface/*'
+              - 'arn:aws:ec2:::instance/*'
+          - Effect: Allow
+            Action:
+              - 'ec2:DescribeAddresses'
+              - 'ec2:DescribeInstances'
+              - 'ec2:DescribeSnapshots'
+              - 'ec2:DescribeSubnets'
+              - 'ec2:DescribeVolumes'
+              - 'ec2:DescribeVpcs'
+            Resource:
+              - 'arn:aws:ec2:::*'
+          - Effect: Allow
+            Action:
+              - 'kms:Encrypt'
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt*'
+              - 'kms:GenerateDataKey*'
+              - 'kms:DescribeKey'
+              - 'kms:CreateGrant'
+              - 'kms:ListGrants'
+              - 'kms:RevokeGrant'
+            Resource:
+              - 'arn:aws:kms:::key/*'
+      Roles:
+        - !Ref HpeCamRestoreManagerRole
+
+  # Data Injector Role & Policy for injecting snapshot data
+  HpeCamDataInjectorRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: "hpe-cam-data-injector"
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'sts:AssumeRole'
+            Principal:
+              AWS: !Sub 'arn:aws:iam::${cVsaAwsAccount}:root'
+            Condition: 
+              StringEquals:
+                sts:ExternalId: !Ref externalId
+        Version: 2012-10-17
+
+  HpeCamDataInjection:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: Policy that allows for the reading snapshot data
+      ManagedPolicyName: hpe-cam-data-injection
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'ebs:PutSnapshotBlock'
+            Resource:
+              - 'arn:aws:ec2:::snapshot/*'
+      Roles:
+        - !Ref HpeCamDataInjectorRole

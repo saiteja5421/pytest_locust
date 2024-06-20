@@ -1,0 +1,18 @@
+ccs_token='eyJhbGciOiJIUzI1NiIsImtpZCI6ImNlYWM5NjliLTZkMzItNGRkZi1hMjQ1LWQwZjk5MTY5NjdmMCIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MDAzMDkyMTIsImlzcyI6Imh0dHA6Ly9zYy10dW5uZWwtY29ubmVjdG9yLXRlbmFuY3ktc2VydmljZTo4MDk3Iiwic3ViIjoiam9lLmJsb2dnc0Bnb29nbGUuY29tIiwidXNlcl9jdHgiOiIxM2UzMjE4NzJiY2RjMjZmODFhZjg0NjdkZGU4NDI1NSJ9.kf5CYi37ldtQxxF9Cs8lAiP1KLhGdLnSaKZsgNuCVeg'
+
+url='http://pqa-s3-lb.ftcpqa.hpe.com'
+
+# To get volume consumptions
+curl --location --request GET "$url/data-observability/v1alpha1/volumes-consumption" --header "Authorization: Bearer $ccs_token" | jq
+
+# To get inventory storage summary
+curl -v -X GET "$url/data-observability/v1alpha1/inventory-storage-systems-summary" -H "Authorization: Bearer $ccs_token" | jq
+
+# To get particular clones io-trend
+curl -v -X GET "$url/data-observability/v1alpha1/systems/49db3aa2b54a43e2b95dc57339c7b811/clones/e077728f76734bd7bbb1eb88f5f5eb9f/clone-io-trend?start-time=2023-03-15T00%3A00%3A00.000Z&end-time=2023-08-05T00%3A00%3A00.000Z" -H "Authorization: Bearer  $ccs_token" | jq
+
+
+curl -v -X GET "$url/data-observability/v1alpha1/volumes-creation-trend?start-time=2023-06-09T00%3A00%3A00Z&end-time=2023-11-29T16%3A05%3A00Z" -H "Authorization: Bearer  $ccs_token" | jq 
+
+
+'X-Auth-Token': 'eyJhbGciOiJIUzI1NiIsImtpZCI6ImNlYWM5NjliLTZkMzItNGRkZi1hMjQ1LWQwZjk5MTY5NjdmMCIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MDAzMDkyMTIsImlzcyI6Imh0dHA6Ly9zYy10dW5uZWwtY29ubmVjdG9yLXRlbmFuY3ktc2VydmljZTo4MDk3Iiwic3ViIjoiam9lLmJsb2dnc0Bnb29nbGUuY29tIiwidXNlcl9jdHgiOiIxM2UzMjE4NzJiY2RjMjZmODFhZjg0NjdkZGU4NDI1NSJ9.kf5CYi37ldtQxxF9Cs8lAiP1KLhGdLnSaKZsgNuCVeg'

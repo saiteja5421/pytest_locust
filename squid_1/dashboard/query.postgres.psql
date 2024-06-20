@@ -1,0 +1,16 @@
+SELECT Req1.name, Req1.request_type as "request type", 
+ count(Req1.*) as "requests", 
+ count(Req1.exception) as "failed",
+ (count(Req1.exception)*100.0/(select count(*) from request Req2 where Req2.request_type = Req1.request_type and Req2.name = Req1.name and $__timeFilter(Req2.time) and (Req2.testplan = '$testplan' or '$testplan' = 'All'))) as "error percentage", 
+ AVG(Req1.response_time) as "Average", 
+ percentile_cont(0.95) within group (order by Req1.response_time) as "95 perc", 
+ percentile_cont(0.99) within group (order by Req1.response_time) as "99 perc", 
+ percentile_cont(0.50) within group (order by Req1.response_time) as "Median", 
+ max(Req1.response_time),
+ min(Req1.response_time),
+ max(Req1.time) as completed_at,
+ min(Req1.time) as started_at
+FROM request Req1
+WHERE $__timeFilter(time) AND 
+ (Req1.testplan = '$testplan' OR '$testplan' = 'All')
+GROUP BY Req1.request_type, Req1.name 

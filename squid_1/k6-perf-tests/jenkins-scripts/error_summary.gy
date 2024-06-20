@@ -1,0 +1,36 @@
+JOBNAME = "Atlas_CFT_test"
+BUILDID = "125"
+
+for (job in Jenkins.instance.getAllItems(Job.class)) {
+  if (job.name == JOBNAME) {
+    for (build in job.builds) {
+      if (build.id == BUILDID) {
+        def lines = build.logFile.readLines()
+        def result = lines.findAll {
+          it.contains("TestResult") && it.contains("=>")
+        }
+        def passcount = lines.findAll {
+          it.contains("TestResult") && it.contains("=> PASS")
+        }
+        def failcount = lines.findAll {
+          it.contains("TestResult") && it.contains("=> FAIL")
+        }
+        def errormsg = lines.findAll {
+          it.contains("level=error") || it.contains("error=")
+        }
+        println "=============="
+        println "Error summary"
+        println "=============="
+        errormsg.each {
+          println it
+        }
+        println "Total tests: ${result.size}"
+        println "Passed tests: ${passcount.size}"
+        println "Failed tests: ${failcount.size}"
+        result.each {
+          println it
+        }
+      }
+    }
+  }
+}

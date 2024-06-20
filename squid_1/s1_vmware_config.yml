@@ -1,0 +1,63 @@
+testbed:  
+  reportportal:
+    endpoint: 'http://10.157.94.124:8080'
+    project: 'SERVICE1'
+    token: 'Hard code for testing or set REPORT_PORTAL_TOKEN environment var when run via jenkins'
+    launch_name: 'SERVICE1-PSR'
+    description: "Performance test for Atlas"
+
+  cloud:
+    # When requests modules are used instead of self.client this url is required
+    oauth2server: "https://sso.common.cloud.hpe.com/as/token.oauth2"
+    
+  users:
+    - username: 'Hard code for testing or set USER_NAME environment var when run via jenkins'
+      crdential_name: 'Hard code for testing or set CREDENTIAL_NAME environment var when run via jenkins'
+      api_client_id: 'Hard code for testing or set OAUTH_CLIENT_ID environment var when run via jenkins'
+      api_client_secret: 'Hard code for testing or set OAUTH_CLIENT_SECRET environment var when run via jenkins'
+  
+  V1BETA:
+    backup_recovery: backup-recovery
+    beta_1_version: v1beta1
+    beta_2_version: v1beta2
+
+testInput:
+  Account:
+    name: vignesh
+  standard_asset_tag:
+    key: perf_test_standardassets
+    value: standard_asset
+  restore_asset_tag:
+    key: perf_test_restore_asset
+    value: restore_asset
+  psgw_name: "PSR-PSG-TEST"
+  backup_vm_list:
+    - "tinyvm_psr_01"
+    - "tinyvm_psr_02"
+    - "tinyvm_psr_03"
+    - "tinyvm_psr_04"
+    - "tinyvm_psr_05"
+  vcenter_details:
+    name: vcsa70-203.vlab.nimblestorage.com
+    datastore: PSR-array28-DS-62TB
+    host: c3-nimdl360g10-253.lab.nimblestorage.com
+    network_name: "VM Network"
+    netmask : "255.255.0.0"
+    gateway : "172.21.0.1"
+    network_type : "STATIC"
+    dns_ip : "10.157.24.201"
+  ip_address_list:
+    - "172.21.6.12"
+    - "172.21.6.19"
+    - "172.21.4.43"
+    - "172.21.4.44"
+    - "172.21.4.45"
+  nic_ip_address_list:
+    - "172.20.224.237"
+    - "172.20.224.238"
+    - "172.20.224.231"
+    - "172.20.224.232"
+    - "172.20.224.233"
+    - "172.20.224.234"
+    
+  

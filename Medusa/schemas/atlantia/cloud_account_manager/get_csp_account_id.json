@@ -1,0 +1,205 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "customerId": "string",
+            "generation": 0,
+            "id": "string",
+            "name": "string",
+            "resourceUri": "string",
+            "type": "string",
+            "cspId": "string",
+            "cspType": "AWS",
+            "errors": [
+                "string"
+            ],
+            "refreshStatus": "OK",
+            "refreshedAt": "1970-01-01T00:00:00.000Z",
+            "status": "UNVALIDATED",
+            "suspended": false,
+            "validatedAt": "1970-01-01T00:00:00.000Z"
+        }
+    ],
+    "required": [
+        "customerId",
+        "generation",
+        "id",
+        "name",
+        "resourceUri",
+        "type",
+        "cspId",
+        "cspType",
+        "errors",
+        "refreshStatus",
+        "refreshedAt",
+        "status",
+        "suspended",
+        "validatedAt"
+    ],
+    "properties": {
+        "customerId": {
+            "$id": "#/properties/customerId",
+            "type": "string",
+            "title": "The customerId schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "generation": {
+            "$id": "#/properties/generation",
+            "type": "integer",
+            "title": "The generation schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": 0,
+            "examples": [
+                0
+            ]
+        },
+        "id": {
+            "$id": "#/properties/id",
+            "type": "string",
+            "title": "The id schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "name": {
+            "$id": "#/properties/name",
+            "type": "string",
+            "title": "The name schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "resourceUri": {
+            "$id": "#/properties/resourceUri",
+            "type": "string",
+            "title": "The resourceUri schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "type": {
+            "$id": "#/properties/type",
+            "type": "string",
+            "title": "The type schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "cspId": {
+            "$id": "#/properties/cspId",
+            "type": "string",
+            "title": "The cspId schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        },
+        "cspType": {
+            "$id": "#/properties/cspType",
+            "type": "string",
+            "title": "The cspType schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "AWS"
+            ]
+        },
+        "errors": {
+            "$id": "#/properties/errors",
+            "type": "array",
+            "title": "The errors schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    "string"
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/errors/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/errors/items/anyOf/0",
+                        "type": "string",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": "",
+                        "examples": [
+                            "string"
+                        ]
+                    }
+                ]
+            }
+        },
+        "refreshStatus": {
+            "$id": "#/properties/refreshStatus",
+            "type": "string",
+            "title": "The refreshStatus schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "OK"
+            ]
+        },
+        "refreshedAt": {
+            "$id": "#/properties/refreshedAt",
+            "type": "string",
+            "title": "The refreshedAt schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "1970-01-01T00:00:00.000Z"
+            ]
+        },
+        "status": {
+            "$id": "#/properties/status",
+            "type": "string",
+            "title": "The status schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "UNVALIDATED"
+            ]
+        },
+        "suspended": {
+            "$id": "#/properties/suspended",
+            "type": "boolean",
+            "title": "The suspended schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": false,
+            "examples": [
+                false
+            ]
+        },
+        "validatedAt": {
+            "$id": "#/properties/validatedAt",
+            "type": "string",
+            "title": "The validatedAt schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "1970-01-01T00:00:00.000Z"
+            ]
+        }
+    },
+    "additionalProperties": true
+}

@@ -1,0 +1,61 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The root schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "examples": [
+        {
+            "items": [
+                "string"
+            ],
+            "key": "string"
+        }
+    ],
+    "required": [
+        "items",
+        "key"
+    ],
+    "properties": {
+        "items": {
+            "$id": "#/properties/items",
+            "type": "array",
+            "title": "The items schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": [],
+            "examples": [
+                [
+                    "string"
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/items/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/items/items/anyOf/0",
+                        "type": "string",
+                        "title": "The first anyOf schema",
+                        "description": "An explanation about the purpose of this instance.",
+                        "default": "",
+                        "examples": [
+                            "string"
+                        ]
+                    }
+                ]
+            }
+        },
+        "key": {
+            "$id": "#/properties/key",
+            "type": "string",
+            "title": "The key schema",
+            "description": "An explanation about the purpose of this instance.",
+            "default": "",
+            "examples": [
+                "string"
+            ]
+        }
+    },
+    "additionalProperties": true
+}

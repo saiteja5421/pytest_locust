@@ -1,0 +1,89 @@
+testbed:
+  AWS:
+    #Use AWS account detail
+    username: "sam-perftest"
+    accesskey: 'Hard code for testing or set AWS_ACCESS_KEY environment var when run via jenkins'
+    secretkey: 'Hard code for testing or set AWS_SECRET_KEY environment var when run via jenkins'
+    imageid: 'ami-0277155c3f0ab2930'
+    region: us-east-1
+    availabilityzone: us-east-1c
+  
+  reportportal:
+    endpoint: 'http://10.157.94.124:8080'
+    project: 'ATLANTIA'
+    token: 'Hard code for testing or set REPORT_PORTAL_TOKEN environment var when run via jenkins'
+    launch_name: 'ATLANTIA-PSR'
+    description: "Performance test for Atlantia"
+
+  cloud:
+    # When requests modules are used instead of self.client this url is required
+    oauth2server: "https://sso.common.cloud.hpe.com/as/token.oauth2"
+    
+    # Auth Token detail
+    filepoc:
+      credentials:
+        account_name: Atlantia_pqa
+        clientid: 'Hard code for testing or set OAUTH_CLIENT_ID environment var when run via jenkins'
+        clientsecret: 'Hard code for testing or set OAUTH_CLIENT_SECRET environment var when run via jenkins'
+    
+    scdev01:
+      credentials:
+        account_name: Atlantia_pqa
+        clientid: 'Hard code for testing or set OAUTH_CLIENT_ID environment var when run via jenkins'
+        clientsecret: 'Hard code for testing or set OAUTH_CLIENT_SECRET environment var when run via jenkins'
+  
+  users:
+    - username: 'Hard code for testing or set USER_NAME environment var when run via jenkins'
+      credential_name: 'Hard code for testing or set CREDENTIAL_NAME environment var when run via jenkins'
+      api_client_id: 'Hard code for testing or set OAUTH_CLIENT_ID environment var when run via jenkins'
+      api_client_secret: 'Hard code for testing or set OAUTH_CLIENT_SECRET environment var when run via jenkins'
+
+  
+  V1BETA:
+    backup_recovery: backup-recovery
+    beta_1_version: v1beta1
+    beta_2_version: v1beta2
+
+testInput:
+  Account:
+    name: sabyaschi
+  standard_asset_tag:
+    key: perf_test_standardassets
+    value: standard_asset
+  restore_asset_tag:
+    key: perf_test_restore_asset
+    value: restore_asset
+  
+  RegisterAccount: 
+    AWS:
+      accountid: 
+        #These are dummy aws ids used to test register account.we can provide any ids but should be unique.
+        - 777049241171
+        - 904447751434
+  RDS:
+    master_user_name: 'Hard code for testing or set MASTER_USER_NAME environment var when run via jenkins'
+    master_user_password: 'Hard code for testing or set MASTER_USER_PASSWORD environment var when run via jenkins'
+
+
+  MS365:
+    ms365_org_account_name: 'PSR_user'
+    ms365_user_email_id: 'psr_user1@ms365br6.onmicrosoft.com'
+
+proxy:
+  proxy_uri: http://hpeproxy.its.hpecorp.net:443
+
+aws_client_config:
+  signature-version: v4
+  retry-max-attempts: 10
+  retry-mode: standard
+
+timeouts:
+  create_backup_timeout: 1800
+  create_cloud_backup_timeout: 7200
+  unregister_purge_timeout: 7200
+  standard_task_timeout: 1800
+  delete_backup_timeout: 1800
+  health_status_timeout: 300
+  rds_create_backup_timeout: 1800
+  rds_restore_timeout: 1800
+  index_backup_timeout: 2400

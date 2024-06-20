@@ -1,0 +1,179 @@
+{
+    "testbed": {
+        "accountOptions": {
+            "HPE_Catalyst": {
+                "credentialName": "api-psr-scdev01",
+                "clientId": "b94ba9d8-ac6e-4a33-800f-7bc83ed4d874",
+                "clientSecret": "699cc74a029211ed9433f216b73f3fd6"
+            }
+        },
+        "atlasOptions": {
+            "baseUri": "https://scdev01-app.qa.cds.hpe.com",
+            "tokenUri": "https://sso.common.cloud.hpe.com/as/token.oauth2"
+        },
+        "vsphereOptions": {
+            "vcenter": "vcsa70-026.vlab.nimblestorage.com",
+            "vmCreationTimeout": "3600",
+            "vsphereAuth": "administrator@vsphere.local:Nim123Boli#",
+            "content_library": "HPE-DSCC-Images"
+        },
+        "vcenterList": [
+            {
+                "name": "vcsa70-026.vlab.nimblestorage.com",
+                "datastoreList": [
+                    "scaleup50TB"
+                ],
+                "hostList": [
+                    "hiqa-tc6.lab.nimblestorage.com"
+                ],
+                "networkName": "network-1014"
+            },
+            {
+                "name": "172.21.214.123",
+                "datastoreList": [
+                    "ca29-oct12vc123-ds1"
+                ],
+                "hostList": [
+                    "c3-nimdl325g10-042.lab.nimblestorage.com",
+                    "c3-nimdl325g10-043.lab.nimblestorage.com",
+                    "c3-nimdl325g10-044.lab.nimblestorage.com"
+                ],
+                "networkName": "network-31"
+            },
+            {
+                "name": "vcsa67-124.vlab.nimblestorage.com",
+                "datastoreList": [
+                    "ca29-oct12vc67124-ds1",
+                    "ca29-oct12vc67124-ds2"
+                ],
+                "hostList": [
+                    "c3-nimdl325g10-036.lab.nimblestorage.com",
+                    "c3-nimdl325g10-037.lab.nimblestorage.com"
+                ],
+                "networkName": "network-51"
+            },
+            {
+                "name": "vcsa70-017.vlab.nimblestorage.com",
+                "datastoreList": [
+                    "vcsa70017-array29-ds1"
+                ],
+                "hostList": [
+                    "c3-nimdl360g10-252.lab.nimblestorage.com"
+                ],
+                "networkName": "network-1013"
+            }
+        ],
+        "reporterOptions": {
+            "endpoint": "http://10.226.67.255:8080/api/v1",
+            "token": "35cb5736-6602-4d54-898e-32dfaace21c2",
+            "launch": "PSR-SCDEV01-CLOUD",
+            "project": "service1",
+            "description": "Performance Test for Cloud Backup and Restore Workflow",
+            "autoMerge": true,
+            "publishResult": true
+        }
+    },
+    "testinput": {
+        "createProtectionGateway": {
+            "virtualUsers": "1",
+            "duration": "30m",
+            "thinkingTime": "15"
+        },
+        "deleteProtectionGateway": {
+            "virtualUsers": "1",
+            "duration": "30m",
+            "thinkBeforeDelete": "5",
+            "waitAfterDelete": "5"
+        },
+        "listProtectionGateway": {
+            "virtualUsers": "2",
+            "iterations": "5",
+            "duration": "10m",
+            "thinkingTime": "10"
+        },
+        "modifyNic": {
+            "virtualUsers": "5",
+            "duration": "30s",
+            "thinkBeforeModify": "10",
+            "waitAfterModify": "10",
+            "networkType": "STATIC"
+        },
+        "modifyLocalStore": {
+            "virtualUsers": "5",
+            "thinkBeforeModifyDNS": "10",
+            "waitAfterModifyDNS": "10",
+            "thinkBeforeModifyProxy": "10",
+            "waitAfterModifyProxy": "10"
+        },
+        "crudWorkflow": {
+            "duration": "8h",
+            "iteration": 1,
+            "nwAddress": "'$management_ip'",
+            "thinkBeforeModifyDNS": "10",
+            "waitAfterModifyDNS": "10",
+            "thinkBeforeModifyProxy": "10",
+            "waitAfterModifyProxy": "10",
+            "psgwOptions": {
+                "data1IP": "'$data1_ip'",
+                "data2IP": "'$data2_ip'",
+                "ipPrefix": "172.21.3.",
+                "ipMin": "124",
+                "ipMax": "127",
+                "network2": "Data1",
+                "network3": "Data2",
+                "gateway": "172.21.0.1",
+                "subnetMask": "255.255.0.0",
+                "dataSubnetMask": "255.255.248.0",
+                "dnsAddress": "10.235.0.185",
+                "protectionStoreVMCount": 1,
+                "vmPrefix": "PerfTest",
+                "alternateDNS": "10.157.24.201"
+            }
+        },
+        "backupRestore": {
+            "duration": "100h",
+            "iteration": "1",
+            "catalystVm": "PSR-PSG-VM",
+            "updateDsName": "scaleup50TB",
+            "updatePsgSize": "1",
+            "vmToProtect": "PSG-TinyVM1",
+            "nwAddress": "172.21.3.126",
+            "psgwOptions": {
+                "data1IP": "172.20.224.250",
+                "data2IP": "172.20.232.220",
+                "ipPrefix": "172.21.3.",
+                "ipMin": "124",
+                "ipMax": "127",
+                "network2": "Data1",
+                "network3": "Data2",
+                "gateway": "172.21.0.1",
+                "subnetMask": "255.255.0.0",
+                "dataSubnetMask": "255.255.248.0",
+                "dnsAddress": "10.157.24.201",
+                "protectionStoreVMCount": 1,
+                "vmPrefix": "PerfTest",
+                "alternateDNS": "10.235.0.185"
+            }
+        },
+        "brimBackup": [
+            {
+                "account": "BRIM2",
+                "mgmtJobId": "5db509f6-d112-4e13-a4fa-c565dde96143",
+                "waitTime": 1200,
+                "name": "PSG-1-BRIM2"
+            },
+            {
+                "account": "BRIM1",
+                "mgmtJobId": "901c02a6-3392-4c8a-9294-b42b9f605f97",
+                "waitTime": 600,
+                "name": "PSG-1"
+            },
+            {
+                "account": "BRIM1",
+                "mgmtJobId": "72353ffd-8fe0-4d1e-ab29-8a831e730ec8",
+                "waitTime": 600,
+                "name": "PSG-2"
+            }
+        ]
+    }
+}

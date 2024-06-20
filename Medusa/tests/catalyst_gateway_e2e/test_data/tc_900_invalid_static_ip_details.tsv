@@ -1,0 +1,10 @@
+network_ip	network_mask	network_gateway	error_message
+172.255.3.130	255.255.0.0	172.21.0.1	validation of network config information failed: gateway address supplied is not valid
+172.21.3.130	254.255.0.0	172.21.0.1	subnetmask validation error: invalid subnet mask 254.255.0.0 : the subnet mask component 255 (#2  component) and subsequent components have to be 0
+172.21.3.130	255.255.255.255	172.21.0.1	validation of network config information failed: gateway address supplied is not valid
+172.256.3.130	255.255.0.0	172.21.0.1	Json validation error: parameter 'NetworkAddress' is not a valid domain name, and parameter 'NetworkAddress' is not a valid IpV4 address
+172.21.3.130	255.256.0.0	172.21.0.1	validation of network config information failed: gateway address supplied is not valid
+172.21.3.130	255.255.0.0	172.256.0.1	gateway address is not a valid ip address (no host names or fqdn allowed currently)
+172/21/3/109	255.255.0.0	172.21.0.1	Json validation error: parameter 'NetworkAddress' is not a valid domain name, and parameter 'NetworkAddress' is not a valid IpV4 address
+0.0.0.0	255.255.0.0	172.21.0.1	IP address validation failed: the first component cannot be 0
+192.21.150.132	255.255.0.0	172.21.0.1	validation of network config information failed: gateway address supplied is not valid

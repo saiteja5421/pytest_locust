@@ -1,0 +1,28 @@
+JOBNAME = 'Atlas_CFT_restore_backup'
+BUILDID = '34'
+def start = 23
+def end = 25
+def time_prefix = '2021-11-30T08:'
+
+for (job in Jenkins.instance.getAllItems(Job.class)) {
+    if (job.name == JOBNAME) {
+        for (build in job.builds) {
+            if (build.id == BUILDID) {
+                def lines = build.logFile.readLines()
+
+                println '===================================================='
+                println "Log summary between ${time_prefix}${start}..${end}"
+                println '======================================================='
+                for (int i in start..end) {
+                    def logmsg = lines.findAll {
+                        it.contains("${time_prefix}${i}")
+                    }
+                    logmsg.each {
+                        println it
+                    }
+                }
+
+            }
+        }
+    }
+}

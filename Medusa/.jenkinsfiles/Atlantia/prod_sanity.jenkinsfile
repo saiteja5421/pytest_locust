@@ -1,0 +1,340 @@
+// job dissabled in sc-jenkins. 
+// new jenkins file "prod_sanity_cxo_jenkins.jenkinsfile" is executed in cxo-jenkins.
+@Library('sc-jenkins-pipeline-shared') _
+
+def list_testcases = 'prod_teardown'
+def dep_regions = []
+def testResults = ""
+
+def generateRegressionTestStage(region, list_testcases) {
+    return {
+        stage("TESTS_${region.toUpperCase()}") {
+            def credentials_aws_one = "797176473325"
+            def credentials_aws_two = "797176473325"
+            if (region.toUpperCase() == "US"){
+                credentials_aws_one = "197113768681"
+            }
+            if (region.toUpperCase() == "EU"){
+                credentials_aws_one = "067712410417"
+            }
+            if (region.toUpperCase() == "AP"){
+                credentials_aws_one = "932840004621"
+            }
+            def random_name = ""
+            if (region.toUpperCase() == "RANDOM_REGIONS"){
+                random_name = "_random_regions"
+                Random rnd = new Random()
+                def all_regions = ["us","eu","ap"]
+                region = all_regions[rnd.nextInt(all_regions.size())]
+                list_testcases = 'prod_sanity'
+            }
+            echo "Suite markers: ${list_testcases}"
+            echo "Credentails AWS ONE: ${credentials_aws_one}"
+            echo "Credentails AWS TWO: ${credentials_aws_two}"
+
+            dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {	
+                withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        accessKeyVariable: 'ACCOUNT_ONE_AWS_KEY_ID',
+                        credentialsId: "${credentials_aws_one}",
+                        secretKeyVariable: 'ACCOUNT_ONE_AWS_SECRET_KEY'
+                    ]]) {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        accessKeyVariable: 'ACCOUNT_TWO_AWS_KEY_ID',
+                        credentialsId: "${credentials_aws_two}",
+                        secretKeyVariable: 'ACCOUNT_TWO_AWS_SECRET_KEY'
+                    ]]) {
+                                            
+                    try {
+                        dir("${env.WORKSPACE}-${env.BUILD_NUMBER}/Medusa")
+                        {
+                            report_portal = "--reportportal --rp-launch SANITY_PROD${random_name.toUpperCase()}_${region.toUpperCase()}"
+                            sh """CONFIG_FILE='variables_sanity_prod_${region}' pytest --log-file=logs_${region}${random_name}/test_run_${region}${random_name}.log --junitxml=logs_${region}${random_name}/junit_${region}${random_name}.xml -sv -m '${list_testcases}' -c configs/atlantia/pytest/pytest_sanity_prod.ini ${report_portal} tests/e2e/aws_protection"""
+                        }
+                    } catch (Exception e) {
+                            echo "Error: ${e}"
+                    }
+
+                    try {
+                        echo "Attempting to archive test log ${region}${random_name}"
+                        archiveArtifacts artifacts: "Medusa/logs_${region}${random_name}/test_run_${region}${random_name}.log", followSymlinks: false
+                    } catch (Exception e) {
+                        echo "Logs are not present in container Medusa/logs_${region}${random_name}/test_run_${region}${random_name}.log, unable to export artifact."
+                        echo "Error: ${e}"
+                    }
+                    
+                    try {
+                        echo "Attempting to extract junit xml report from  Medusa/logs_${region}${random_name}/junit_${region}${random_name}.xml container:"
+                        def summary = junit allowEmptyResults: true, healthScaleFactor: 0.0, skipPublishingChecks: true, testResults: "Medusa/logs_${region}${random_name}/junit_${region}${random_name}.xml"
+                        currentBuild.description += "\n|${region.toUpperCase()}${random_name.toUpperCase()} | Total: ${summary.totalCount} | Passed: ${summary.passCount} | Failures: ${summary.failCount} | Skipped: ${summary.skipCount} |"
+                    } catch  (Exception e) {
+                        echo "XML test report is not present in container, unable to extract results."
+                        echo "Error: ${e}"
+                    }
+                }}
+            }
+        }
+    }
+}
+
+pipeline {
+    agent {
+        kubernetes {
+            inheritFrom 'tests-medusa'
+            defaultContainer 'tests-medusa'
+              yaml '''
+              spec:
+                containers:
+                - name: tests-medusa
+                  image: hub.docker.hpecorp.net/atlantia-qa/regression:atlantia-e2e
+                  imagePullPolicy: Always
+                  command: ["tail"]
+                  args: ["-f", "/dev/null"]
+                  ttyEnabled: true
+        '''
+        }
+    }
+
+    options {
+        // keep last 10 builds
+        buildDiscarder(
+            logRotator(numToKeepStr: '10')
+        )
+
+        timestamps()
+    }
+
+    // triggers {
+    //     cron '0 2 * * *'
+    // }
+
+    parameters {
+        string(defaultValue: 'refs/tags/v1.8-prod-tag',
+                description: 'Type your git ref if you want to run build using a specific tag or branch.',
+                name: 'TAG',
+                trim: true)
+        separator name: 'separator-c726b08e-4d6f-464b-91ad-dca7d1e26aa1', sectionHeader: 'CHOOSE DEPLOYMENT REGIONS:'
+        separator name: 'separator-c726b08e-4d6f-464b-91ad-dca7d1e26aa1', sectionHeader: '(if you select more than one, then all regions will be executed parallel)'
+        separator name: 'separator-c726b08e-4d6f-464b-91ad-dca7d1e26aa1', sectionHeader: '(MANUAL EXECUTION: Do not select (WILL WAIT FOR NIGHT TRIGGER) there will be a conflict with cron execution)'
+        separator name: 'separator-c726b08e-4d6f-464b-91ad-dca7d1e26aa2', sectionHeader: ''
+        booleanParam(defaultValue: true,
+                description: 'US1',
+                name: 'US')
+        booleanParam(defaultValue: true,
+                description: 'EU1',
+                name: 'EU')
+        booleanParam(defaultValue: true,
+                description: 'JP1',
+                name: 'AP')
+        booleanParam(defaultValue: true,
+                description: '(WILL WAIT FOR NIGHT TRIGGER) Random deployment region. Radom AWS region US and non-US. It will also test register/unregister account. ',
+                name: 'RANDOM_REGIONS')
+        separator name: 'separator-c726b08e-4d6f-464a-91ad-dca7d1e26aa1', sectionHeader: 'CHOOSE PROD TESTCASES:'
+        separator name: 'separator-c726b08e-4d6f-464a-91ad-dca7d1e26aa2', sectionHeader: 'Teardown will always run at the end.'
+        separator name: 'separator-c726b08e-4d6f-464a-91ad-dca7d1e26aa3', sectionHeader: ''
+        booleanParam(defaultValue: true,
+                description: 'remove stack',
+                name: 'STACK')
+        booleanParam(defaultValue: true,
+                description: 'upload stack if removed and revalidate accounts',
+                name: 'ACCOUNT')
+        booleanParam(defaultValue: true,
+                description: 'unassign from polices, delete old standard assets, create new standard assets with protection groups, assign to protection policy, inv sync',
+                name: 'INVENTORY')
+        booleanParam(defaultValue: true,
+                description: 'unassign old protection policy from standard assets, create new protection policy, assign standard assets, inv sync',
+                name: 'PROTECTION_POLICY')
+        booleanParam(defaultValue: true,
+                description: 'create only native backup',
+                name: 'NATIVE_BACKUP')
+        booleanParam(defaultValue: true,
+                description: 'create restore form last native backup',
+                name: 'NATIVE_RESTORE')
+        booleanParam(defaultValue: true,
+                description: '(WILL WAIT FOR NIGHT TRIGGER) create cloud backup (it will wait till midnight to complete',
+                name: 'CLOUD_BACKUP')
+        booleanParam(defaultValue: true,
+                description: 'create restore form last cloud backup',
+                name: 'CLOUD_RESTORE')
+        separator name: 'separator-c726b08e-4d6f-464a-91ad-dca7d1e26aa4', sectionHeader: 'CHOOSE CANARY TESTCASES:'
+        separator name: 'separator-c726b08e-4d6f-464a-91ad-dca7d1e26aa3', sectionHeader: ''
+        booleanParam(defaultValue: true,
+                description: 'verify all tasks and schedules from last week',
+                name: 'TASKS_CANARY')
+        booleanParam(defaultValue: true,
+                description: 'refresh inventory and verify long-lived protection policies, protection groups, and assignments',
+                name: 'INVENTORY_CANARY')
+        booleanParam(defaultValue: true,
+                description: 'restore random backup from long-lived ec2 and ebs',
+                name: 'CLOUD_RESTORE_CANARY')
+        booleanParam(defaultValue: true,
+                description: '(WILL WAIT FOR NIGHT TRIGGER) create on demand cloud backup for long-lived assets',
+                name: 'CLOUD_BACKUP_CANARY')
+        separator name: 'separator-c726b08e-4d6f-464a-91ad-dca7d1e26aa4', sectionHeader: 'CHOOSE COMMON TESTCASES:'
+        separator name: 'separator-c726b08e-4d6f-464a-91ad-dca7d1e26aa3', sectionHeader: ''
+        booleanParam(defaultValue: true,
+                description: 'verify dashboard statistics',
+                name: 'DASHBOARD')
+    }
+
+    environment {
+        SERVICE_VERSION = 'service2'
+        REPO_NAME = 'qa_automation'
+        HTTPS_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        HTTP_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        NO_PROXY = '127.0.0.1,localhost,.nimblestorage.com,10.0.0.0/8'
+    }
+
+    stages {
+        stage("Run Sanity Tests") {
+            stages{
+                stage("Build suite configuration") {
+                    steps {
+                        script {
+                            list_testcases += params.STACK ? ' or prod_stack_remove' : ''
+                            list_testcases += params.ACCOUNT ? ' or prod_account' : ''
+                            list_testcases += params.INVENTORY ? ' or prod_inventory' : ''
+                            list_testcases += params.TASKS_CANARY ? ' or prod_canary_tasks' : ''
+                            list_testcases += params.INVENTORY_CANARY ? ' or prod_canary_inventory' : ''
+                            list_testcases += params.PROTECTION_POLICY ? ' or prod_policy' : ''
+                            list_testcases += params.NATIVE_BACKUP ? ' or prod_backup' : ''
+                            list_testcases += params.NATIVE_RESTORE ? ' or prod_native_restore' : ''
+                            list_testcases += params.CLOUD_BACKUP ? ' or prod_cloud_backup' : ''
+                            list_testcases += params.CLOUD_BACKUP_CANARY ? ' or prod_canary_cloud_backup' : ''
+                            list_testcases += params.CLOUD_BACKUP_CANARY || params.CLOUD_BACKUP? ' or prod_wait_cloud_backup' : ''
+                            list_testcases += params.CLOUD_RESTORE ? ' or prod_cloud_restore' : ''
+                            list_testcases += params.CLOUD_RESTORE_CANARY ? ' or prod_canary_cloud_restore' : ''
+                            list_testcases += params.DASHBOARD ? ' or prod_dashboard' : ''
+
+                            if (params.US){
+                                dep_regions.add("us")
+                            }
+                            if (params.EU){
+                                dep_regions.add("eu")
+                            }
+                            if (params.AP){
+                                dep_regions.add("ap")
+                            }
+                            if (params.RANDOM_REGIONS){
+                                dep_regions.add("random_regions")
+                            }
+
+                            echo "Suite markers: ${list_testcases}"
+                            echo "Suite deployments regions: ${dep_regions}"
+                        }
+                    }
+                }
+                stage("Checkout Repository") {
+                    steps {
+                        script {
+                            try {
+                                dir("${env.WORKSPACE}-${env.BUILD_NUMBER}")
+                                {
+                                    checkout(
+                                        [$class: 'GitSCM',
+                                        branches: [[name: "${params.TAG}"]],
+                                        userRemoteConfigs: [[credentialsId: 'nimble-dcs-org', url: 'https://github.hpe.com/nimble/qa_automation.git']]]
+                                    )
+                                }
+                            } catch (Exception e) {
+                                    echo "Error: ${e}"
+                            }
+                        }
+                    }
+                }
+                stage("Update Client and Secret IDs") {
+                    steps {
+                        dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {
+                            script {
+                                def region="${region}"
+                                if (region.toUpperCase() == "US") {
+                                    // Get secret id for all users from Jenkins using client id stored as credentialId
+                                    // Secret text format <client id>,<secret id>
+                                    withCredentials([string(credentialsId: 'user_one_us_west_sanity', variable: 'USER_ONE_CRED'), string(credentialsId: 'user_two_us_west_sanity', variable: 'USER_TWO_CRED'), string(credentialsId: 'user_three_us_west_sanity', variable: 'USER_THREE_CRED')]) {
+                                        // Execute Python script to update the client and secret ids in the config file
+                                        sh '''
+                                        python3 Medusa/utils/update_config_file.py variables_sanity_prod_$region.ini admin $USER_ONE_CRED $USER_TWO_CRED $USER_THREE_CRED
+                                        '''                        
+                                        }
+                                }
+                                if (region.toUpperCase() == "AP") {
+                                    // Get secret id for all users from Jenkins using client id stored as credentialId
+                                    // Secret text format <client id>,<secret id>
+                                    withCredentials([string(credentialsId: 'user_one_ap_northeast_sanity', variable: 'USER_ONE_CRED'), string(credentialsId: 'user_two_ap_northeast_sanity', variable: 'USER_TWO_CRED'), string(credentialsId: 'user_three_ap_northeast_sanity', variable: 'USER_THREE_CRED')]) {
+                                        // Execute Python script to update the client and secret ids in the config file
+                                        sh '''
+                                        python3 Medusa/utils/update_config_file.py variables_sanity_prod_$region.ini admin $USER_ONE_CRED $USER_TWO_CRED $USER_THREE_CRED
+                                        '''                        
+                                        }
+                                }
+                                if (region.toUpperCase() == "EU") {
+                                    // Get secret id for all users from Jenkins using client id stored as credentialId
+                                    // Secret text format <client id>,<secret id>
+                                    withCredentials([string(credentialsId: 'user_one_eu_central_sanity', variable: 'USER_ONE_CRED'), string(credentialsId: 'user_two_eu_central_sanity', variable: 'USER_TWO_CRED'), string(credentialsId: 'user_three_eu_central_sanity', variable: 'USER_THREE_CRED')]) {
+                                        // Execute Python script to update the client and secret ids in the config file
+                                        sh '''
+                                        python3 Medusa/utils/update_config_file.py variables_sanity_prod_$region.ini admin $USER_ONE_CRED $USER_TWO_CRED $USER_THREE_CRED
+                                        '''                        
+                                        }
+                                }
+                                if (region.toUpperCase() == "UK") {
+                                    // Get secret id for all users from Jenkins using client id stored as credentialId
+                                    // Secret text format <client id>,<secret id>
+                                    withCredentials([string(credentialsId: 'user_one_eu_west_sanity', variable: 'USER_ONE_CRED'), string(credentialsId: 'user_two_eu_west_sanity', variable: 'USER_TWO_CRED'), string(credentialsId: 'user_three_eu_west_sanity', variable: 'USER_THREE_CRED')]) {
+                                        // Execute Python script to update the client and secret ids in the config file
+                                        sh '''
+                                        python3 Medusa/utils/update_config_file.py variables_sanity_prod_$region.ini admin $USER_ONE_CRED $USER_TWO_CRED $USER_THREE_CRED
+                                        '''                        
+                                        }
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('Copy private key') {
+                    steps {
+                        withCredentials([file(credentialsId: 'private-ssh-key', variable: 'key_pair_prod')]) {
+                        sh ''' 
+                        cp $key_pair_prod $WORKSPACE-$BUILD_NUMBER/Medusa/key_pair_prod_kg_api-automation-1_us-east-1_197113768681.pem
+                        cp $key_pair_prod $WORKSPACE-$BUILD_NUMBER/Medusa/key_pair_prod_kg_api-automation-1_us-east-1_067712410417.pem
+                        cp $key_pair_prod $WORKSPACE-$BUILD_NUMBER/Medusa/key_pair_prod_kg_api-automation-1_us-east-1_932840004621.pem
+                        '''
+                        }
+                    }
+                }
+                stage("Parallel Region Test Exeution"){
+                    steps {
+                        script {
+                            currentBuild.description = ""
+                            echo "Suite markers: ${list_testcases}"
+                            echo "Suite deployments regions: ${dep_regions}"
+
+                            def parallelRegressionTestSuites = dep_regions.collectEntries {
+                                ["${it}" : generateRegressionTestStage(it, list_testcases)]
+                            }
+                            parallel parallelRegressionTestSuites
+                        }
+                    }
+                }
+            }
+            
+        }
+    }
+    post {
+        always {
+            script {
+                cleanWs()
+                chatNotification(channel: 'jenkins_sc_pqa_notification')
+            }
+        cleanup {
+            /* clean up the workspace */
+            deleteDir()
+            /* clean up tmp directory */
+            dir("${workspace}@tmp") {
+                deleteDir()
+            }
+        }
+        }
+    }
+}

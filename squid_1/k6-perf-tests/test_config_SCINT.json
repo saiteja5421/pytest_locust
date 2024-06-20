@@ -1,0 +1,164 @@
+{
+    "testbed": {
+        "accountOptions": {
+            "HPE_Catalyst": {
+                "credential_name": "api-psr-scint",
+                "client_id": "ba951050-77e2-48f2-aa0e-06e08c5efd90",
+                "client_secret": "e16a3c58029211edbb9726f2c173e501"
+            }
+        },
+        "atlasOptions": {
+            "baseUri": "https://scint-app.qa.cds.hpe.com",
+            "tokenUri": "https://sso.common.cloud.hpe.com/as/token.oauth2"
+        },
+        "vsphereOptions": {
+            "vcenter": "vcsa70-072.vlab.nimblestorage.com",
+            "vmCreationTimeout": "3600",
+            "vsphereAuth": "administrator@vsphere.local:Nim123Boli#",
+            "content_library": "HPE-DSCC-Images"
+        },
+        "vcenterList": [
+            {
+                "name": "vcsa70-026.vlab.nimblestorage.com",
+                "datastoreList": [
+                    "scaleup50TB"
+                ],
+                "hostList": [
+                    "hiqa-tc6.lab.nimblestorage.com"
+                ],
+                "networkName": "network-1014"
+            },
+            {
+                "name": "172.21.214.123",
+                "datastoreList": [
+                    "ca29-oct12vc123-ds1"
+                ],
+                "hostList": [
+                    "c3-nimdl325g10-042.lab.nimblestorage.com",
+                    "c3-nimdl325g10-043.lab.nimblestorage.com",
+                    "c3-nimdl325g10-044.lab.nimblestorage.com"
+                ],
+                "networkName": "network-31"
+            },
+            {
+                "name": "vcsa70-072.vlab.nimblestorage.com",
+                "datastoreList": [
+                    "PSG-DS-1"
+                ],
+                "hostList": [
+                    "hiqa-win13.lab.nimblestorage.com"
+                ],
+                "networkName": "network-51"
+            },
+            {
+                "name": "vcsa70-017.vlab.nimblestorage.com",
+                "datastoreList": [
+                    "array28-ds-60TB"
+                ],
+                "hostList": [
+                    "c3-nimdl360g10-252.lab.nimblestorage.com"
+                ],
+                "networkName": "network-1013"
+            }
+        ],
+        "reporterOptions": {
+            "endpoint": "http://10.226.67.255:8080/api/v1",
+            "token": "35cb5736-6602-4d54-898e-32dfaace21c2",
+            "launch": "PSR-SCINT-CLOUD",
+            "project": "service1",
+            "description": "Performance Test for Cloud Backup and Restore Workflow",
+            "autoMerge": true,
+            "publishResult": false
+        }
+    },
+    "testinput": {
+        "createProtectionGateway": {
+            "virtualUsers": "1",
+            "duration": "30m",
+            "thinkingTime": "15"
+        },
+        "deleteProtectionGateway": {
+            "virtualUsers": "1",
+            "duration": "30m",
+            "thinkBeforeDelete": "5",
+            "waitAfterDelete": "5"
+        },
+        "listProtectionGateway": {
+            "virtualUsers": "2",
+            "iterations": "5",
+            "duration": "10m",
+            "thinkingTime": "10"
+        },
+        "modifyNic": {
+            "virtualUsers": "5",
+            "duration": "30s",
+            "thinkBeforeModify": "10",
+            "waitAfterModify": "10",
+            "networkType": "STATIC"
+        },
+        "modifyLocalStore": {
+            "virtualUsers": "5",
+            "thinkBeforeModifyDNS": "10",
+            "waitAfterModifyDNS": "10",
+            "thinkBeforeModifyProxy": "10",
+            "waitAfterModifyProxy": "10"
+        },
+        "crudWorkflow": {
+            "duration": "8h",
+            "iteration": 1,
+            "nwAddress": "172.21.3.123",
+            "thinkBeforeModifyDNS": "10",
+            "waitAfterModifyDNS": "10",
+            "thinkBeforeModifyProxy": "10",
+            "waitAfterModifyProxy": "10",
+            "psgwOptions": {
+                "ipPrefix": "172.21.3.",
+                "ipMin": "124",
+                "ipMax": "127",
+                "data1IPPrefix": "172.20.224.",
+                "data1IPMin": "246",
+                "data1IPMax": "249",
+                "data2IPPrefix": "172.20.232.",
+                "data2IPMin": "16",
+                "data2IPMax": "19",
+                "network2": "Data1",
+                "network3": "Data2",
+                "gateway": "172.21.0.1",
+                "subnetMask": "255.255.0.0",
+                "dataSubnetMask": "255.255.248.0",
+                "dnsAddress": "10.235.0.185",
+                "protectionStoreVMCount": 1,
+                "vmPrefix": "PerfTest",
+                "alternateDNS": "10.157.24.201"
+            }
+        },
+        "backupRestore": {
+            "duration": "100h",
+            "iteration": "1",
+            "catalystVm": "PSG-VM",
+            "updateDsName": "PSG-DS",
+            "updatePsgSize": "1",
+            "vmToProtect": "tinyvm"
+        },
+        "brimBackup": [
+            {
+                "account": "BRIM2",
+                "mgmtJobId": "5db509f6-d112-4e13-a4fa-c565dde96143",
+                "waitTime": 1200,
+                "name": "PSG-1-BRIM2"
+            },
+            {
+                "account": "BRIM1",
+                "mgmtJobId": "901c02a6-3392-4c8a-9294-b42b9f605f97",
+                "waitTime": 600,
+                "name": "PSG-1"
+            },
+            {
+                "account": "BRIM1",
+                "mgmtJobId": "72353ffd-8fe0-4d1e-ab29-8a831e730ec8",
+                "waitTime": 600,
+                "name": "PSG-2"
+            }
+        ]
+    }
+}

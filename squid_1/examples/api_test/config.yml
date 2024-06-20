@@ -1,0 +1,6 @@
+locustfile = get_user.py
+host = https://reqres.in
+users = 10
+spawn-rate = 5
+run-time = 60s
+headless = true

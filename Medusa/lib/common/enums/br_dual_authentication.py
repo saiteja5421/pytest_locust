@@ -1,0 +1,11 @@
+from enum import Enum
+
+
+class BRDualAuth(Enum):
+    DENY_REQUEST_STATUS_CHECKED = "Canceled"
+    APPROVE_REQUEST_STATUS_CHECKED = "Approved"
+    DELETE_REQUEST_STATUS_CHECKED = "Deleted"
+    ENABLE_DUAL_AUTH_CURRENT_VALUE = "ON"
+    DISABLE_DUAL_AUTH_CURRENT_VALUE = "OFF"
+    REQUEST_STATUS = "Pending"
+    SETTINGS_OPTION = 1

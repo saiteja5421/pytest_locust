@@ -1,0 +1,926 @@
+@Library('sc-jenkins-pipeline-shared') _
+
+def suite_markers = ["ec2_ebs_sanity", "rds_sanity", "gfrs_sanity", "single_volume_sanity", "aclm_sanity_setup"]
+serviceVersions = [:]
+serviceVersionsSequence = [:]
+priorityOrderedMap = [:]
+def date = new Date()
+DAY = date.format("EEEE")
+
+class Service {
+    String serviceName
+    String scdevServiceVersion
+    String scdevServiceVersionTail
+    String scintServiceVersion
+    String scintServiceVersionTail
+    boolean deploy
+}
+
+/**
+* Adds a service name and its deployment priority to the map
+* Raises an error if a service with a priority already assigned to another service is being added 
+* @param priority
+* @param serviceName
+*/
+def addServiceVersionToSequence(priority, serviceName) {
+    try {
+        if(serviceVersionsSequence.containsKey(priority)) {
+            error "Priority ${priority} already exists for service ${serviceVersionsSequence.get(priority)}"
+        }
+        else {
+            serviceVersionsSequence.put(priority, serviceName)
+        }
+    } catch (Exception e) {
+        currentBuild.result = "FAILURE"
+        throw e
+    }
+}
+
+/**
+*
+* @param serviceName Name of the service for which deployment flag should be set to true
+This flag will determine the trigger  'deploy-to-integration-and-production' job for the target service
+**/
+def setDeploymentJobStatus(serviceName) {
+  if(serviceName == CAM_SERVICE_NAME){
+    TRIGGER_CAM_DEPLOYMENT_JOB = true
+  }
+  else if(serviceName == IM_SERVICE_NAME) {
+    TRIGGER_IM_DEPLOYMENT_JOB = true
+  }
+  else if(serviceName == RDS_IM_SERVICE_NAME) {
+    TRIGGER_RDS_IM_DEPLOYMENT_JOB = true
+  }
+  else if(serviceName == SCHEDULER_SERVICE_NAME) {
+    TRIGGER_SCHEDULER_DEPLOYMENT_JOB = true
+  }
+  else if(serviceName == FMCS_SERVICE_NAME) {
+    TRIGGER_FMCS_DEPLOYMENT_JOB = true
+  }
+  else if(serviceName == FISS_SERVICE_NAME) {
+    TRIGGER_FISS_DEPLOYMENT_JOB = true
+  }
+  else if(serviceName == LIFECYCLE_SERVICE_NAME) {
+    TRIGGER_LIFECYCLE_DEPLOYMENT_JOB = true
+  }
+}
+
+/**
+* 
+* @param priorityOrderedMap Map with service name and its priority
+* @param serviceVersions serviceVersions object with service details
+* @return Deployment Jenkins stage
+*/
+def deployServices(priorityOrderedMap, serviceVersions) {
+    priorityOrderedMap.each {entry ->
+        println "$entry.key: $entry.value"
+        // eg. priorityOrderedMap -> key = 1, value = CAM
+        if(serviceVersions.containsKey(entry.value)) {
+            Service service = serviceVersions.get(entry.value)
+            if(service.deploy && currentBuild.currentResult == 'SUCCESS' && service.scdevServiceVersion > service.scintServiceVersion) {
+                println "Deploying $service.serviceName: $service.scdevServiceVersion, $service.deploy, SCINT version $service.scintServiceVersion"
+                setDeploymentJobStatus(entry.value)
+                return stage("Deploying ${service.serviceName}: ${service.scdevServiceVersion}-${service.scdevServiceVersionTail}") {
+                    echo "Service deployed"
+                    // Uncomment the below code when deployment needs to be enabled
+                    // deployToCluster(
+                    //     service: "${service.serviceName}",
+                    //     cluster: 'scint-us-west-2',
+                    //     chartVersion: "${service.scdevServiceVersion}-${service.scdevServiceVersionTail}",
+                    // )
+                }
+            }
+        }
+    }
+}
+
+
+ /**
+* Adds the service version details to 'serviceVersions' map
+* @param serviceName Name of the service
+* @param scdevServiceVersion current version of service on SCDEV01
+* @param scdevServiceVersionTail current version-tail of service on SCDEV01
+* @param scintServiceVersion current version of service on SCINT
+* @param scintServiceVersionTail current version-tail of service on SCINT
+* @param deploy flag which decides the service's deployment
+*/
+def addServiceDetailsToMap(serviceName, scdevServiceVersion, scdevServiceVersionTail, scintServiceVersion, scintServiceVersionTail, deploy) {
+    Service service = new Service()
+    service.serviceName = serviceName
+    service.scdevServiceVersion = scdevServiceVersion
+    service.scdevServiceVersionTail = scdevServiceVersionTail
+    service.scintServiceVersion = scintServiceVersion
+    service.scintServiceVersionTail = scintServiceVersionTail
+    service.deploy = deploy
+    serviceVersions.put(serviceName, service)
+    println "Service Version Map: ${service.serviceName}, ${service.scdevServiceVersion}, ${service.scdevServiceVersionTail}"
+    println "Service Version Map: ${service.scintServiceVersion}, ${service.scintServiceVersionTail}, ${service.deploy}"
+}
+
+def generateSanityTestStage(mark_suite) {
+    return {
+        stage("Stage: ${mark_suite}") {
+            dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {	
+                withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        accessKeyVariable: 'ACCOUNT_ONE_AWS_KEY_ID',
+                        credentialsId: 'SCDEV01_ACCOUNT_ONE_AWS_KEY_ID',
+                        secretKeyVariable: 'ACCOUNT_ONE_AWS_SECRET_KEY'
+                    ]]) {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        accessKeyVariable: 'ACCOUNT_TWO_AWS_KEY_ID',
+                        credentialsId: 'SCDEV01_ACCOUNT_ONE_AWS_KEY_ID',
+                        secretKeyVariable: 'ACCOUNT_TWO_AWS_SECRET_KEY'
+                    ]]) {
+                    withCredentials([string(credentialsId: 'RP_API_KEY_2', variable: 'RP_API_KEY')]) {
+                        try {
+                            dir("${env.WORKSPACE}-${env.BUILD_NUMBER}/Medusa")
+                            {
+                                def command = "pytest -sv -m '${mark_suite} and validated' -c configs/atlantia/pytest/pytest_sanity_scdev01.ini --log-file=logs/test_run_${mark_suite} --junitxml=logs/junit_${mark_suite}_${DAY}.xml"
+                                if (params.ENABLE_REPORT_PORTAL) {
+                                    sh "${command} --reportportal --rp-launch SANITY-FILEPOC_${mark_suite}_$DAY tests/e2e/aws_protection/test_sanity"
+                                } else {
+                                    sh "${command} tests/e2e/aws_protection/test_sanity"
+                                }
+                            }
+                        } catch (Exception e) {
+                                echo "Error: ${e}"
+                        }
+                    }
+                    try {
+                        echo "Attempting to archive test log ${mark_suite}"
+                        archiveArtifacts artifacts: "Medusa/logs/test_run_${mark_suite}", followSymlinks: false
+                    } catch (Exception e) {
+                        echo "Logs are not present in container Medusa/logs/test_run_${mark_suite}, unable to export artifact."
+                        echo "Error: ${e}"
+                    }
+                    
+                    try {
+                        echo "Attempting to extract junit xml report from  Medusa/logs/junit_${mark_suite}_${DAY}.xml container:"
+                        def summary = junit allowEmptyResults: true, healthScaleFactor: 0.0, skipPublishingChecks: true, testResults: "Medusa/logs/junit_${mark_suite}_${DAY}.xml"
+                        currentBuild.description += "\n|${mark_suite.toUpperCase()} | Total: ${summary.totalCount} | Passed: ${summary.passCount} | Failures: ${summary.failCount} | Skipped: ${summary.skipCount} |"
+                    } catch  (Exception e) {
+                        echo "XML test report is not present in container, unable to extract results."
+                        echo "Error: ${e}"
+                    }
+                }
+                }
+            }
+        }
+    }
+}
+
+
+def clean_version_string(version_string) {
+    // There seems to be an issue with the version string, where there are extra \" characters.
+    // I believe the "tr -d" is meant to do some cleaning, but without "jq" on dcs-jenkins-cxo, did not investigate.
+    //
+    // In addition, string compares with versions such as "0.0.205-0-gbe06705" do not perform as desired,
+    // likely due to the last part starting with "-g"
+    // A recent run has csp-inventory on FILEPOC at "0.0.361-0-ge1b8bad3" and on SCDEV01 as "0.0.360-0-gff77c3fb",
+    // yet the deployment did not take place after all tests passed.
+    echo "cleaning version: ${version_string}"
+
+    // 0.0.205-0-gbe06705  -->  0.0.205  0  gbe06705
+    def values = version_string.split('-')
+
+    // we'll keep only the 1st and 2nd parts for numeric compare, indexing works
+    def part_1 = values[0]
+    def part_2 = values[1]
+    def part_3 = values[2]
+
+    // of the 1st part, let's trim off leading characters until we hit a digit (likely 0)
+    def index = 0
+    def length = part_1.length()
+    while (index < length && part_1[index].isNumber() == false) {
+        index++
+    }
+    def new_part_1 = part_1.substring(index, part_1.length())
+    echo "Final part_1 = ${new_part_1}"
+
+    // build and return new part_1 with -part_2
+    def final_version = "${new_part_1}-${part_2}"
+    echo "Final Version to return: ${final_version}"
+
+    // clean part_3 and return "version_tail", we want only alphanumeric characeters
+    index = 0
+    length = part_3.length()
+    while (index < length && part_3[index].matches('.*[A-Za-z0-9].*')) {
+        index++
+    }
+    // echo "Final Tail Index = ${index}"
+    def final_tail = part_3.substring(0, index)
+
+    // def final_tail = "test"
+    echo "Final Tail: ${final_tail}"
+
+    return [final_version, final_tail]
+}
+
+pipeline {
+    agent {
+        kubernetes {
+            inheritFrom 'tests-medusa'
+            defaultContainer 'tests-medusa'
+              yaml '''
+              spec:
+                containers:
+                - name: tests-medusa
+                  resourceRequestCpu: "100m"
+                  resourceRequestMemory: "256Mi"
+                  resourceRequestEphemeralStorage: "1024Mi"
+                  image: hub.docker.hpecorp.net/atlantia-qa/regression:atlantia-e2e
+                  imagePullPolicy: Always
+                  command: ["tail"]
+                  args: ["-f", "/dev/null"]
+                  ttyEnabled: true
+                - name: jnlp
+                  resourceRequestEphemeralStorage: "1024Mi"
+                  resources:
+                    requests:
+                        ephemeral-storage: "1024Mi"
+        '''
+        }
+    }
+
+    options {
+        // keep last 10 builds
+        buildDiscarder(
+            logRotator(numToKeepStr: '10')
+        )
+
+        skipDefaultCheckout true
+
+        timestamps()
+    }
+
+    triggers {
+        cron 'H 06 * * *'
+    }
+
+    parameters {
+        string(defaultValue: 'master',
+                description: 'Default value is master, type your branch name if you want to run build on specific branch',
+                name: 'BRANCH_NAME',
+                trim: true)
+        choice(
+            choices: ['EC2/EBS, RDS, GFRS, ACLM and Single Volume', 'EC2/EBS only', 'RDS only', 'GFRS only', 'Single Volume only', 'ACLM Sanity Setup only'],
+            name: 'SANITY_SUITES',
+            description: 'By default, the suites EC2/EBS, RDS and GFRS Sanity will be executed.<br>You may select to run either EC2/EBS, RDS or GFRS Sanity suites alone.')
+        booleanParam(defaultValue: true,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: 'ruben.kumar@hpe.com, sachin.uplaonkar@hpe.com, mark.balunis@hpe.com, tata@hpe.com, krzysztof.gibert@hpe.com',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Report Portal flag',
+                name: 'ENABLE_REPORT_PORTAL')
+        choice(
+            choices: ['false', 'true',],
+            name: 'DEPLOY_CAM',
+            description: "Deploys CAM bits to SCINT if set to 'true'")
+        choice(
+            choices: [1, 2, 3, 4, 5, 6, 7],
+            name: 'CAM_DEPLOYMENT_PRIORITY',
+            description: "Sets the sequence in which the CAM service should be deployed")
+        choice(
+            choices: ['false', 'true',],
+            name: 'DEPLOY_IM',
+            description: "Deploys IM bits to SCINT if set to 'true'")
+        choice(
+            choices: [2, 1, 3, 4, 5, 6, 7],
+            name: 'IM_DEPLOYMENT_PRIORITY',
+            description: "Sets the sequence in which the IM service should be deployed")
+        choice(
+            choices: ['false', 'true',],
+            name: 'DEPLOY_SCHEDULER',
+            description: "Deploys Scheduler bits to SCINT if set to 'true'")
+        choice(
+            choices: [3, 2, 1, 4, 5, 6, 7],
+            name: 'SCHEDULER_DEPLOYMENT_PRIORITY',
+            description: "Sets the sequence in which the Scheduler service should be deployed")
+        choice(
+            choices: ['false', 'true',],
+            name: 'DEPLOY_RDS_IM',
+            description: "Deploys RDS IM bits to SCINT if set to 'true'")
+        choice(
+            choices: [4, 2, 3, 1, 5, 6, 7],
+            name: 'RDS_IM_DEPLOYMENT_PRIORITY',
+            description: "Sets the sequence in which the RDS IM service should be deployed")
+        choice(
+            choices: ['false', 'true',],
+            name: 'DEPLOY_FILE_METADATA_CONNECTOR',
+            description: "Deploys File Metadata Connector bits to SCINT if set to 'true'")
+        choice(
+            choices: [5, 2, 3, 4, 1, 6, 7],
+            name: 'FILE_METADATA_CONNECTOR_DEPLOYMENT_PRIORITY',
+            description: "Sets the sequence in which the File Metadata Connector service should be deployed")
+        choice(
+            choices: ['false', 'true',],
+            name: 'DEPLOY_FILE_INDEXER',
+            description: "Deploys File Indexer bits to SCINT if set to 'true'")
+        choice(
+            choices: [6, 2, 3, 4, 5, 1, 7],
+            name: 'FILE_INDEXER_DEPLOYMENT_PRIORITY',
+            description: "Sets the sequence in which the File Indexer service should be deployed")
+        choice(
+            choices: ['false', 'true',],
+            name: 'DEPLOY_CSP_LIFECYCLE',
+            description: "Deploys Lifecycle Manager bits to SCINT if set to 'true'")
+        choice(
+            choices: [7, 2, 3, 4, 5, 6, 1],
+            name: 'CSP_LIFECYCLE_DEPLOYMENT_PRIORITY',
+            description: "Sets the sequence in which the CSP Lifecycle service should be deployed")
+    }
+
+    environment {
+        SERVICE_VERSION = 'service2'
+        CONFIG_FILE = 'variables_sanity_scdev01'
+        HTTPS_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        HTTP_PROXY = 'http://hpeproxy.its.hpecorp.net:443'
+        NO_PROXY = '127.0.0.1,localhost,.nimblestorage.com,10.0.0.0/8'
+
+        // Atlantia ocelot services
+        CAM_SERVICE_NAME = 'cloud-account-manager'
+        IM_SERVICE_NAME = 'csp-inventory'
+        RDS_IM_SERVICE_NAME = 'csp-rds-inventory-manager'
+        SCHEDULER_SERVICE_NAME = 'csp-scheduler'
+        FMCS_SERVICE_NAME = 'file-metadata-connector'
+        FISS_SERVICE_NAME = 'file-metadata-indexer'
+        LIFECYCLE_SERVICE_NAME = 'csp-lifecycle'
+
+        SC_INFO_URL_FMT = 'https://sc-info.rtplab.nimblestorage.com/api/builds?sortBy={"sortKey":"run_on","sortDir":"desc","sortColumn":"run_on"}&filters=[{"columnName":"application","type":"search","value":"%s"},{"columnName":"cluster","type":"search","value":"%s-%s"}]&pagination={"startRow":0,"endRow":1}'
+
+        TRIGGER_CAM_DEPLOYMENT_JOB = false
+        TRIGGER_IM_DEPLOYMENT_JOB = false
+        TRIGGER_RDS_IM_DEPLOYMENT_JOB = false
+        TRIGGER_SCHEDULER_DEPLOYMENT_JOB = false
+        TRIGGER_FMCS_DEPLOYMENT_JOB = false
+        TRIGGER_FISS_DEPLOYMENT_JOB = false
+        TRIGGER_LIFECYCLE_DEPLOYMENT_JOB = false
+    }
+
+    stages {
+        stage('Prepare service deployment sequence') {
+            steps {
+                script {
+                    if(params.DEPLOY_CAM.toBoolean()) {
+                        addServiceVersionToSequence(params.CAM_DEPLOYMENT_PRIORITY, CAM_SERVICE_NAME)
+                    }
+
+                    if(params.DEPLOY_IM.toBoolean()) {
+                        addServiceVersionToSequence(params.IM_DEPLOYMENT_PRIORITY, IM_SERVICE_NAME)
+                    }
+
+                    if(params.DEPLOY_SCHEDULER.toBoolean()) {
+                        addServiceVersionToSequence(params.SCHEDULER_DEPLOYMENT_PRIORITY, SCHEDULER_SERVICE_NAME)
+                    }
+
+                    if(params.DEPLOY_RDS_IM.toBoolean()) {
+                        addServiceVersionToSequence(params.RDS_IM_DEPLOYMENT_PRIORITY, RDS_IM_SERVICE_NAME)
+                    }
+
+                    if(params.DEPLOY_FILE_METADATA_CONNECTOR.toBoolean()) {
+                        addServiceVersionToSequence(params.FILE_METADATA_CONNECTOR_DEPLOYMENT_PRIORITY, FMCS_SERVICE_NAME)
+                    }
+
+                    if(params.DEPLOY_FILE_INDEXER.toBoolean()) {
+                        addServiceVersionToSequence(params.FILE_INDEXER_DEPLOYMENT_PRIORITY, FISS_SERVICE_NAME)
+                    }
+
+                    if(params.DEPLOY_CSP_LIFECYCLE.toBoolean()) {
+                        addServiceVersionToSequence(params.CSP_LIFECYCLE_DEPLOYMENT_PRIORITY, LIFECYCLE_SERVICE_NAME)
+                    }
+
+                    // sorting the map based on priority
+                    priorityOrderedMap = serviceVersionsSequence.sort()
+                    println "Deployment Priority Map: ${priorityOrderedMap}"
+                }
+            }
+        }
+        stage('Build Suite Configuration') {
+            steps {
+                echo "Stage 1 result = ${currentBuild.result}"
+                echo "Stage 1 currentResult = ${currentBuild.currentResult}"
+
+                script {
+                    if (params.SANITY_SUITES == 'EC2/EBS only') {
+                        suite_markers = ['ec2_ebs_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'RDS only') {
+                        suite_markers = ['rds_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'GFRS only') {
+                        suite_markers = ['gfrs_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'Single Volume only') {
+                        suite_markers = ['single_volume_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'ACLM Sanity Setup only') {
+                        suite_markers = ['aclm_sanity_setup']
+                    }
+
+                }
+            }
+        }
+
+        stage('Sanity Test And Deployment') {
+            stages {
+                // Retrieve the services versions from SCDEV01 before Sanity tests execution
+                // List of services: CAM, IM, RDS-IM and Scheduler
+                stage('Retrieve Services Version from SCDEV01') {
+                    steps {
+                        echo "Stage 2a result = ${currentBuild.result}"
+                        echo "Stage 2a currentResult = ${currentBuild.currentResult}"
+                        // The curl command retrieves the chart version e.g 0.0.325-0-g49d2ddc8
+                        script {
+                            CloudAccountManagerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${CAM_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            CloudAccountManagerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${CloudAccountManagerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            // CloudAccountManagerVersionScdev01 = "\"0.0.207-0-gbe06705\""
+                            (CloudAccountManagerVersionScdev01, CloudAccountManagerVersionScdev01Tail) = clean_version_string(CloudAccountManagerVersionScdev01)
+                        }
+                        echo "${CAM_SERVICE_NAME} chart version on SCDEV01: ${CloudAccountManagerVersionScdev01}"
+                        script {
+                            InventoryManagerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${IM_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            InventoryManagerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${InventoryManagerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            // InventoryManagerVersionScdev01 = "0.0.361-0-ge1b8bad3"
+                            (InventoryManagerVersionScdev01, InventoryManagerVersionScdev01Tail) = clean_version_string(InventoryManagerVersionScdev01)
+                        }
+                        echo "${IM_SERVICE_NAME} chart version on SCDEV01: ${InventoryManagerVersionScdev01}"
+                        script {
+                            RdsInventoryManagerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${RDS_IM_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            RdsInventoryManagerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${RdsInventoryManagerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            // RdsInventoryManagerVersionScdev01 = "0.0.121-0-g9797688"
+                            (RdsInventoryManagerVersionScdev01, RdsInventoryManagerVersionScdev01Tail) = clean_version_string(RdsInventoryManagerVersionScdev01)
+                        }
+                        echo "${RDS_IM_SERVICE_NAME} chart version on SCDEV01: ${RdsInventoryManagerVersionScdev01}"
+                        script {
+                            SchedulerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${SCHEDULER_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            SchedulerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${SchedulerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            // SchedulerVersionScdev01 = "0.3.2-25-gf5a1eeb4"
+                            (SchedulerVersionScdev01, SchedulerVersionScdev01Tail) = clean_version_string(SchedulerVersionScdev01)
+                        }
+                        echo "${SCHEDULER_SERVICE_NAME} chart version on SCDEV01: ${SchedulerVersionScdev01}"
+                        script {
+                            FileMetadataConnectorScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${FMCS_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            FileMetadataConnectorVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${FileMetadataConnectorScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            // FileMetadataConnectorVersionScdev01 = "0.0.67-0-g0831541"
+                            (FileMetadataConnectorVersionScdev01, FileMetadataConnectorVersionScdev01Tail) = clean_version_string(FileMetadataConnectorVersionScdev01)
+                        }
+                        echo "${FMCS_SERVICE_NAME} chart version on SCDEV01: ${FileMetadataConnectorVersionScdev01}"
+                        script {
+                            FileMetadataIndexerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${FISS_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            FileMetadataIndexerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${FileMetadataIndexerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (FileMetadataIndexerVersionScdev01, FileMetadataIndexerVersionScdev01Tail) = clean_version_string(FileMetadataIndexerVersionScdev01)
+                        }
+                        echo "${FISS_SERVICE_NAME} chart version on SCDEV01: ${FileMetadataIndexerVersionScdev01}"
+                         script {
+                            LifecycleManagerScdev01URL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${LIFECYCLE_SERVICE_NAME} "scdev01" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            LifecycleManagerVersionScdev01 = sh (
+                                script: "curl --location --globoff \'${LifecycleManagerScdev01URL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (LifecycleManagerVersionScdev01, LifecycleManagerVersionScdev01Tail) = clean_version_string(LifecycleManagerVersionScdev01)
+                        }
+                        echo "${LIFECYCLE_SERVICE_NAME} chart version on SCDEV01: ${LifecycleManagerVersionScdev01}"
+                    }
+                }
+                stage("Checkout Repository") {
+                    steps {
+                        script {
+                            try {
+                                dir("${env.WORKSPACE}-${env.BUILD_NUMBER}")
+                                {
+                                    checkout(
+                                        [$class: 'GitSCM',
+                                        branches: [[name: "${params.BRANCH_NAME}"]],
+                                        extensions: [[$class: 'CloneOption', depth: 1, noTags: false, reference: '', shallow: true, timeout: 30]], 
+                                        userRemoteConfigs: [[credentialsId: 'nimble-dcs-org', url: 'https://github.hpe.com/nimble/qa_automation.git']]]
+                                    )
+                                }
+                            } catch (Exception e) {
+                                    echo "Error: ${e}"
+                            }
+                        }
+                        
+                    }
+                }
+                stage("Update Client and Secret IDs") {
+                    steps {
+                        dir("${env.WORKSPACE}-${env.BUILD_NUMBER}") {
+                            script {
+                                // Get secret id for all users from Jenkins using client id stored as credentialId
+                                // Secret text format <client id>,<secret id>
+                                withCredentials([string(credentialsId: 'user_one_scdev01_sanity', variable: 'USER_ONE_CRED')]) {
+                                    // Execute Python script to update the client and secret ids in the config file
+                                    sh '''
+                                    python3 Medusa/utils/update_config_file.py variables_sanity_scdev01.ini admin $USER_ONE_CRED
+                                    '''                        
+                                }
+                            }
+                        }
+                    }
+                }
+                stage("Run Sanity Tests") {
+                    steps {
+                        script {
+                            echo "Stage 2b result = ${currentBuild.result}"
+                            echo "Stage 2b currentResult = ${currentBuild.currentResult}"
+
+                            currentBuild.description = "" // setting to empty string so that `null` is not reported
+                            generateSanityTestStage("setup_sanity").call()
+                                                        
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                // use "suite_markers" after the "Build Suite Configuration" stage
+                                // ***** Commenting out for now. Will enable after testing deployment stages
+                                parallel suite_markers.collectEntries {
+                                    ["${it}" : generateSanityTestStage(it)]
+                                }
+                            }
+
+                            // Add Validation only if Setup was performed
+                            if ("aclm_sanity_setup" in suite_markers) {
+                                generateSanityTestStage("aclm_sanity_validation").call()
+                            }
+
+                            generateSanityTestStage("teardown_sanity").call()
+                        }
+                        
+                    }
+                }
+                // Retrieve the services versions from SCINT after Sanity tests execution
+                // List of services: CAM, IM, RDS-IM and Scheduler
+                stage('Retrieve Services Version from SCINT') {
+                    steps {
+                        echo "Stage 2c result = ${currentBuild.result}"
+                        echo "Stage 2c currentResult = ${currentBuild.currentResult}"
+
+                        // The curl command retrieves the chart version e.g 0.0.325-0-g49d2ddc8
+                        script {
+                            CloudAccountManagerScintURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${CAM_SERVICE_NAME} "scint" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            CloudAccountManagerVersionScint = sh (
+                                script: "curl --location --globoff \'${CloudAccountManagerScintURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            // CloudAccountManagerVersionScint = "\\\"0.0.205-0-gbe06705\\\""
+                            (CloudAccountManagerVersionScint, CloudAccountManagerVersionScintTail) = clean_version_string(CloudAccountManagerVersionScint)
+
+                            // Adding service version details to map for deployment
+                            addServiceDetailsToMap(
+                                    CAM_SERVICE_NAME, 
+                                    CloudAccountManagerVersionScdev01, 
+                                    CloudAccountManagerVersionScdev01Tail, 
+                                    CloudAccountManagerVersionScint, 
+                                    CloudAccountManagerVersionScintTail, 
+                                    params.DEPLOY_CAM.toBoolean(),
+                            )
+                        }
+                        echo "${CAM_SERVICE_NAME} chart version on SCINT: ${CloudAccountManagerVersionScint}"
+                        script {
+                            InventoryManagerScintURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${IM_SERVICE_NAME} "scint" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            InventoryManagerVersionScint = sh (
+                                script: "curl --location --globoff \'${InventoryManagerScintURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            // InventoryManagerVersionScint = "0.0.360-0-gff77c3fb"
+                            (InventoryManagerVersionScint, InventoryManagerVersionScintTail) = clean_version_string(InventoryManagerVersionScint)
+
+                            // Adding service version details to map for deployment
+                            addServiceDetailsToMap(
+                                    IM_SERVICE_NAME, 
+                                    InventoryManagerVersionScdev01, 
+                                    InventoryManagerVersionScdev01Tail, 
+                                    InventoryManagerVersionScint, 
+                                    InventoryManagerVersionScintTail, 
+                                    params.DEPLOY_IM.toBoolean(),
+                            )
+                        }
+                        echo "${IM_SERVICE_NAME} chart version on SCINT: ${InventoryManagerVersionScint}"
+                        script {
+                            RdsInventoryManagerScintURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${RDS_IM_SERVICE_NAME} "scint" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            RdsInventoryManagerVersionScint = sh (
+                                script: "curl --location --globoff \'${RdsInventoryManagerScintURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            // RdsInventoryManagerVersionScint = "\\\"0.0.111-0-g9797688\\\""
+                            (RdsInventoryManagerVersionScint, RdsInventoryManagerVersionScintTail) = clean_version_string(RdsInventoryManagerVersionScint)
+
+
+                            // Adding service version details to map for deployment
+                            addServiceDetailsToMap(
+                                    RDS_IM_SERVICE_NAME, 
+                                    RdsInventoryManagerVersionScdev01, 
+                                    RdsInventoryManagerVersionScdev01Tail, 
+                                    RdsInventoryManagerVersionScint, 
+                                    RdsInventoryManagerVersionScintTail, 
+                                    params.DEPLOY_RDS_IM.toBoolean(),
+                            )
+                        }
+                        echo "${RDS_IM_SERVICE_NAME} chart version on SCINT: ${RdsInventoryManagerVersionScint}"
+                        script {
+                            SchedulerScintURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${SCHEDULER_SERVICE_NAME} "scint" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            SchedulerVersionScint = sh (
+                                script: "curl --location --globoff \'${SchedulerScintURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            // SchedulerVersionScint = "\"0.3.2-24-gf5a1eeb4\""
+                            (SchedulerVersionScint, SchedulerVersionScintTail) = clean_version_string(SchedulerVersionScint)
+
+                            // Adding service version details to map for deployment
+                            addServiceDetailsToMap(
+                                    SCHEDULER_SERVICE_NAME, 
+                                    SchedulerVersionScdev01, 
+                                    SchedulerVersionScdev01Tail, 
+                                    SchedulerVersionScint, 
+                                    SchedulerVersionScintTail, 
+                                    params.DEPLOY_SCHEDULER.toBoolean(),
+                            )
+                        }
+                        echo "${SCHEDULER_SERVICE_NAME} chart version on SCINT: ${SchedulerVersionScint}"
+                        script {
+                            FileMetadataConnectorScintURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${FMCS_SERVICE_NAME} "scint" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            FileMetadataConnectorVersionScint = sh (
+                                script: "curl --location --globoff \'${FileMetadataConnectorScintURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            // FileMetadataConnectorVersionScdev01 = "0.0.67-0-g0831541"
+                            (FileMetadataConnectorVersionScint, FileMetadataConnectorVersionScintTail) = clean_version_string(FileMetadataConnectorVersionScint)
+
+                            // Adding service version details to map for deployment
+                            addServiceDetailsToMap(
+                                    FMCS_SERVICE_NAME, 
+                                    FileMetadataConnectorVersionScdev01, 
+                                    FileMetadataConnectorVersionScdev01Tail, 
+                                    FileMetadataConnectorVersionScint, 
+                                    FileMetadataConnectorVersionScintTail, 
+                                    params.DEPLOY_FILE_METADATA_CONNECTOR.toBoolean(),
+                            )
+                        }
+                        echo "${FMCS_SERVICE_NAME} chart version on SCINT: ${FileMetadataConnectorVersionScint}"
+                        script {
+                            FileMetadataIndexerScintURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${FISS_SERVICE_NAME} "scint" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            FileMetadataIndexerVersionScint = sh (
+                                script: "curl --location --globoff \'${FileMetadataIndexerScintURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (FileMetadataIndexerVersionScint, FileMetadataIndexerVersionScintTail) = clean_version_string(FileMetadataIndexerVersionScint)
+
+                            // Adding service version details to map for deployment
+                            addServiceDetailsToMap(
+                                    FISS_SERVICE_NAME, 
+                                    FileMetadataIndexerVersionScdev01, 
+                                    FileMetadataIndexerVersionScdev01Tail, 
+                                    FileMetadataIndexerVersionScint, 
+                                    FileMetadataIndexerVersionScintTail, 
+                                    params.DEPLOY_FILE_INDEXER.toBoolean(),
+                            )
+                        }
+                        echo "${FISS_SERVICE_NAME} chart version on SCDEV01: ${FileMetadataIndexerVersionScint}"
+                        //// LIFECYCLE
+                        script {
+                            LifecycleManagerScintURL = sh (
+                                script: 'echo $(printf ${SC_INFO_URL_FMT} ${LIFECYCLE_SERVICE_NAME} "scint" "us-west-2")',
+                                returnStdout: true
+                            ).trim()
+                            LifecycleManagerVersionScint = sh (
+                                script: "curl --location --globoff \'${LifecycleManagerScintURL}\' | jq \'.dbObjects[0].version\'  | tr -d \"\"",
+                                returnStdout: true
+                            ).trim()
+                            (LifecycleManagerVersionScint, LifecycleManagerVersionScintTail) = clean_version_string(LifecycleManagerVersionScint)
+
+                            // Adding service version details to map for deployment
+                            addServiceDetailsToMap(
+                                    LIFECYCLE_SERVICE_NAME, 
+                                    LifecycleManagerVersionScdev01, 
+                                    LifecycleManagerVersionScdev01Tail, 
+                                    LifecycleManagerVersionScint, 
+                                    LifecycleManagerVersionScintTail, 
+                                    params.DEPLOY_CSP_LIFECYCLE.toBoolean(),
+                            )
+                        }
+                        echo "${LIFECYCLE_SERVICE_NAME} chart version on SCINT: ${LifecycleManagerVersionScint}"
+                    }
+                }
+                stage('Deploy Atlantia Services to SCINT cluster') {
+                    steps {
+                        script {
+                            deployServices(priorityOrderedMap, serviceVersions)
+                        }
+                    }
+                }
+                stage('Trigger SCINT Sanity Build') {
+                    // Only run sanity suite if the deployment happened for at least one service
+                    when {
+                        expression { 
+                            TRIGGER_CAM_DEPLOYMENT_JOB == true ||
+                            TRIGGER_IM_DEPLOYMENT_JOB == true ||
+                            TRIGGER_RDS_IM_DEPLOYMENT_JOB == true ||
+                            TRIGGER_SCHEDULER_DEPLOYMENT_JOB == true ||
+                            TRIGGER_FMCS_DEPLOYMENT_JOB == true ||
+                            TRIGGER_FISS_DEPLOYMENT_JOB == true
+                        }
+                    }
+                    steps {
+                      script {
+                        // def triggerResult = build wait: true, waitForStart: true, job: 'quality-chapter/Backup-Recovery-In-Cloud-Sanity-SCINT/master'
+                        echo "Triggering SCINT build..."
+                      }
+                    }
+                }
+                stage("Trigger 'deploy-to-integration-and-production' for CAM") {
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { TRIGGER_CAM_DEPLOYMENT_JOB == true }
+                    }
+                    steps {
+                      script {
+                        scint_version = "${CloudAccountManagerVersionScdev01}-${CloudAccountManagerVersionScdev01Tail}"
+                        def triggerResult = build wait: false, waitForStart: true, job: 'Storage-Central-Deployments/deploy-to-integration-and-production', parameters: [string(name: 'SERVICE', value: CAM_SERVICE_NAME), string(name: 'CHART_VERSION', value: scint_version), string(name: 'VALUES_FILENAME', value: 'values.yaml'), string(name: 'SLACK_CHANNELS', value: '')]
+                        def downstreamBuildNumber = triggerResult.getNumber()
+                        echo "CAM Downstream build number = ${downstreamBuildNumber}"
+                        CAMDownstreamBuildUrl = "${JENKINS_URL}/view/Storage-Central-Deployments/job/Storage-Central-Deployments/job/deploy-to-integration-and-production/${downstreamBuildNumber}"
+                        def camBuildUrl = "CAM Downstream Build URL: ${FMCSDownstreamBuildUrl}"
+                        echo "${camBuildUrl}"
+                        currentBuild.description += "\n|${camBuildUrl}"
+                      }
+                  }
+                }
+                stage("Trigger 'deploy-to-integration-and-production' for IM") {
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { TRIGGER_IM_DEPLOYMENT_JOB == true }
+                    }
+                    steps {
+                      script {
+                        scint_version = "${InventoryManagerVersionScdev01}-${InventoryManagerVersionScdev01Tail}"
+                        def triggerResult = build wait: false, waitForStart: true, job: 'Storage-Central-Deployments/deploy-to-integration-and-production', parameters: [string(name: 'SERVICE', value: IM_SERVICE_NAME), string(name: 'CHART_VERSION', value: scint_version), string(name: 'VALUES_FILENAME', value: 'values.yaml'), string(name: 'SLACK_CHANNELS', value: '')]
+                        def downstreamBuildNumber = triggerResult.getNumber()
+                        echo "IM Downstream build number = ${downstreamBuildNumber}"
+                        IMDownstreamBuildUrl = "${JENKINS_URL}/view/Storage-Central-Deployments/job/Storage-Central-Deployments/job/deploy-to-integration-and-production/${downstreamBuildNumber}"
+                        def imBuildUrl = "IM Downstream Build URL: ${FMCSDownstreamBuildUrl}"
+                        echo "${imBuildUrl}"
+                        currentBuild.description += "\n|${imBuildUrl}"
+                      }
+                  }   
+                }
+                stage("Trigger 'deploy-to-integration-and-production' for RDS IM") {
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { TRIGGER_RDS_IM_DEPLOYMENT_JOB == true }
+                    }
+                    steps {
+                      script {
+                        scint_version = "${RdsInventoryManagerVersionScdev01}-${RdsInventoryManagerVersionScdev01Tail}"
+                        def triggerResult = build wait: false, waitForStart: true, job: 'Storage-Central-Deployments/deploy-to-integration-and-production', parameters: [string(name: 'SERVICE', value: RDS_IM_SERVICE_NAME), string(name: 'CHART_VERSION', value: scint_version), string(name: 'VALUES_FILENAME', value: 'values.yaml'), string(name: 'SLACK_CHANNELS', value: '')]
+                        def downstreamBuildNumber = triggerResult.getNumber()
+                        echo "RDS IM Downstream build number = ${downstreamBuildNumber}"
+                        RDSIMDownstreamBuildUrl = "${JENKINS_URL}/view/Storage-Central-Deployments/job/Storage-Central-Deployments/job/deploy-to-integration-and-production/${downstreamBuildNumber}"
+                        def rdsIMBuildUrl = "RDS IM Downstream Build URL: ${FMCSDownstreamBuildUrl}"
+                        echo "${rdsIMBuildUrl}"
+                        currentBuild.description += "\n|${rdsIMBuildUrl}"
+                      }
+                  } 
+                }
+                stage("Trigger 'deploy-to-integration-and-production' for SCHEDULER") {
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { TRIGGER_SCHEDULER_DEPLOYMENT_JOB == true }
+                    }
+                    steps {
+                      script {
+                          scint_version = "${SchedulerVersionScdev01}-${SchedulerVersionScdev01Tail}"
+                          def triggerResult = build wait: false, waitForStart: true, job: 'Storage-Central-Deployments/deploy-to-integration-and-production', parameters: [string(name: 'SERVICE', value: SCHEDULER_SERVICE_NAME), string(name: 'CHART_VERSION', value: scint_version), string(name: 'VALUES_FILENAME', value: 'values.yaml'), string(name: 'SLACK_CHANNELS', value: '')]
+                          def downstreamBuildNumber = triggerResult.getNumber()
+                          echo "SCHEDULER IM Downstream build number = ${downstreamBuildNumber}"
+                          SchedulerDownstreamBuildUrl = "${JENKINS_URL}/view/Storage-Central-Deployments/job/Storage-Central-Deployments/job/deploy-to-integration-and-production/${downstreamBuildNumber}"
+                          def schedulerBuildUrl = "Scheduler Downstream Build URL: ${FMCSDownstreamBuildUrl}"
+                          echo "${schedulerBuildUrl}"
+                          currentBuild.description += "\n|${schedulerBuildUrl}"
+                      }
+                  }  
+                }
+                stage("Trigger 'deploy-to-integration-and-production' for FMCS") {
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { TRIGGER_FMCS_DEPLOYMENT_JOB == true }
+                    }
+                    steps {
+                      script {
+                          scint_version = "${FileMetadataConnectorVersionScdev01}-${FileMetadataConnectorVersionScdev01Tail}"
+                          def triggerResult = build wait: false, waitForStart: true, job: 'Storage-Central-Deployments/deploy-to-integration-and-production', parameters: [string(name: 'SERVICE', value: FMCS_SERVICE_NAME), string(name: 'CHART_VERSION', value: scint_version), string(name: 'VALUES_FILENAME', value: 'values.yaml'), string(name: 'SLACK_CHANNELS', value: '')]
+                          def downstreamBuildNumber = triggerResult.getNumber()
+                          echo "FMCS IM Downstream build number = ${downstreamBuildNumber}"
+                          FMCSDownstreamBuildUrl = "${JENKINS_URL}/view/Storage-Central-Deployments/job/Storage-Central-Deployments/job/deploy-to-integration-and-production/${downstreamBuildNumber}"
+                          def fmcsBuildUrl = "FMCS Downstream Build URL: ${FMCSDownstreamBuildUrl}"
+                          echo "${fmcsBuildUrl}"
+                          currentBuild.description += "\n|${fmcsBuildUrl}"
+                        }
+                    }  
+                }
+                stage("Trigger 'deploy-to-integration-and-production' for FISS") {
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { TRIGGER_FISS_DEPLOYMENT_JOB == true }
+                    }
+                    steps {
+                      script {
+                          scint_version = "${FileMetadataIndexerVersionScdev01}-${FileMetadataIndexerVersionScdev01Tail}"
+                          def triggerResult = build wait: false, waitForStart: true, job: 'Storage-Central-Deployments/deploy-to-integration-and-production', parameters: [string(name: 'SERVICE', value: FISS_SERVICE_NAME), string(name: 'CHART_VERSION', value: scint_version), string(name: 'VALUES_FILENAME', value: 'values.yaml'), string(name: 'SLACK_CHANNELS', value: '')]
+                          def downstreamBuildNumber = triggerResult.getNumber()
+                          echo "FISS IM Downstream build number = ${downstreamBuildNumber}"
+                          FISSDownstreamBuildUrl = "${JENKINS_URL}/view/Storage-Central-Deployments/job/Storage-Central-Deployments/job/deploy-to-integration-and-production/${downstreamBuildNumber}"
+                          def fissBuildUrl = "FISS Downstream Build URL: ${FISSDownstreamBuildUrl}"
+                          echo "${fissBuildUrl}"
+                          currentBuild.description += "\n|${fissBuildUrl}"
+                      }
+                  }   
+                }
+                stage("Trigger 'deploy-to-integration-and-production' for CSP LIFECYCLE") {
+                    when {
+                        expression { currentBuild.currentResult == 'SUCCESS' }
+                        expression { TRIGGER_LIFECYCLE_DEPLOYMENT_JOB == true }
+                    }
+                    steps {
+                      script {
+                          scint_version = "${LifecycleManagerVersionScdev01}-${LifecycleManagerVersionScdev01Tail}"
+                          def triggerResult = build wait: false, waitForStart: true, job: 'Storage-Central-Deployments/deploy-to-integration-and-production', parameters: [string(name: 'SERVICE', value: LIFECYCLE_SERVICE_NAME), string(name: 'CHART_VERSION', value: scint_version), string(name: 'VALUES_FILENAME', value: 'values.yaml'), string(name: 'SLACK_CHANNELS', value: '')]
+                          def downstreamBuildNumber = triggerResult.getNumber()
+                          echo "Lifecycle Downstream build number = ${downstreamBuildNumber}"
+                          LifecycleDownstreamBuildUrl = "${JENKINS_URL}/view/Storage-Central-Deployments/job/Storage-Central-Deployments/job/deploy-to-integration-and-production/${downstreamBuildNumber}"
+                          def licycleBuildUrl = "CSP Lifecycle Downstream Build URL: ${LifecycleDownstreamBuildUrl}"
+                          echo "${licycleBuildUrl}"
+                          currentBuild.description += "\n|${licycleBuildUrl}"
+                      }
+                    }     
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                cleanWs()
+                chatNotification(channel: 'jenkins_sc_pqa_notification')
+            }
+        }
+    }
+}

@@ -1,0 +1,20 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eks-cluster2
+  region: us-west-1 # we are using a random supported region as part of the test, it  is just a ref
+  version: "1.26" # we are using a random supported version as part of the test, it is just a ref
+
+vpc:
+  cidr: 10.0.0.0/20
+  clusterEndpoints:
+    publicAccess: true
+
+managedNodeGroups:
+  - name: nodegroup2
+    instanceType: t2.small
+    desiredCapacity: 2
+    maxSize: 2
+    minSize: 2
+    volumeSize: 100

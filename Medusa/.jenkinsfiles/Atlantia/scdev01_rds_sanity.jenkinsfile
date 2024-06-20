@@ -1,0 +1,269 @@
+// default value for both EC2/EBS and RDS Sanity Suites
+def suite_markers = ["ec2_ebs_sanity", "rds_sanity", "gfrs_sanity", "single_volume_sanity", "aclm_sanity_setup"]
+
+def date = new Date()
+DAY = date.format("EEEE")
+CONTAINER_NAME = "atlantia_e2e_scdev01_sanity"
+
+def generateRegressionTestStage(mark_suite) {
+    return {
+        stage("stage: ${mark_suite}") {
+            def container = "${CONTAINER_NAME}_${mark_suite}_${DAY}"
+
+            def suite_name = "SANITY-SCDEV01-${mark_suite.toUpperCase()}"
+            def rp_description = "'Atlantia SCDEV01 B&R sanity build: ${env.BUILD_NUMBER}'"
+            echo "This is ${suite_name}."
+            def pytest_ini_file_name = "pytest_sanity_scdev01.ini"
+            withCredentials([string(credentialsId: 'RP_API_KEY_2', variable: 'RP_API_KEY')]) {
+                try {
+                    def command = """docker run -w /Medusa --name ${container} --pull always --env-file $WORKSPACE/Medusa/.env -e RP_API_KEY=$RP_API_KEY -e SERVICE_VERSION="service2" -e CONFIG_FILE="variables_sanity_scdev01" -v $WORKSPACE/Medusa:/Medusa hub.docker.hpecorp.net/atlantia-qa/regression:atlantia-e2e pytest -sv -m "${mark_suite} and validated" -c configs/atlantia/pytest/${pytest_ini_file_name} --junitxml=logs/${mark_suite}_junit.xml"""
+                    if (params.ENABLE_REPORT_PORTAL) {
+                        sh "${command} --reportportal --rp-launch ${suite_name}_$DAY --rp-launch-description ${rp_description} /Medusa/tests/e2e/aws_protection/test_sanity"
+                    } else {
+                        sh "${command} /Medusa/tests/e2e/aws_protection/test_sanity"
+                    }
+                } catch (Exception e) {
+                    echo "Error: ${e}"
+                }
+            }
+        }
+    }
+}
+
+def generateStopRegressionTestStage(mark_suite) {
+    return {
+        stage("Stop Container: ${mark_suite}") {
+            def container = "${CONTAINER_NAME}_${mark_suite}_${DAY}"
+
+            try {
+                echo "Attempting to extract test logs from ${container} container:"
+                sh "rm -rf ${container}-${env.BUILD_NUMBER}_${mark_suite}_junit.xml"
+                sh "docker cp ${container}:/Medusa/logs/${mark_suite}_junit.xml ${WORKSPACE}/${container}-${env.BUILD_NUMBER}_${mark_suite}_junit.xml"
+                sh "cat ${container}-${env.BUILD_NUMBER}_${mark_suite}_junit.xml"
+                def summary = junit allowEmptyResults: true, healthScaleFactor: 0.0, skipPublishingChecks: true, testResults: "${container}-${env.BUILD_NUMBER}_${mark_suite}_junit.xml"
+                currentBuild.description += "\n\nTest Summary for ${mark_suite}\n---\nTotal: ${summary.totalCount}\nPassed: ${summary.passCount}\nFailures: ${summary.failCount}\nSkipped: ${summary.skipCount}\n\n"
+            } catch (err) {
+                echo "Logs are not present in container ${env.CONTAINER_NAME}, unable to export artifact, ${err}"
+            }
+
+            try {
+                echo "Attempting to stop ${container} container:"
+                sh "docker stop ${container}"
+                echo "${container} stopped."
+            } catch (err) {
+                sh "Container ${container} is not running."
+            }
+
+            try {
+                echo "Attempting to remove ${container} container:"
+                sh "docker rm ${container}"
+                echo "${container} removed."
+            } catch (err) {
+                sh "Container ${container} does not exist."
+            }
+        }
+    }
+}
+
+pipeline {
+    agent {
+        label 'atlantia-jenkins'
+    }
+
+    options {
+        timestamps()
+        buildDiscarder logRotator(artifactDaysToKeepStr: '',
+                artifactNumToKeepStr: '20',
+                daysToKeepStr: '',
+                numToKeepStr: '20')
+        skipDefaultCheckout()
+        disableConcurrentBuilds()
+    }
+
+    parameters {
+        string(defaultValue: 'master',
+                description: 'Default value is master, type your branch name if you want to run build on specific branch',
+                name: 'BRANCH_NAME',
+                trim: true)
+        choice(
+            choices: ['EC2/EBS, RDS, GFRS, ACLM and Single Volume', 'EC2/EBS only', 'RDS only', 'GFRS only', 'Single Volume only', 'ACLM Sanity Setup only'],
+            name: 'SANITY_SUITES',
+            description: 'By default, the suites EC2/EBS, RDS and GFRS Sanity will be executed.<br>You may select to run either EC2/EBS, RDS or GFRS Sanity suites alone.')
+        booleanParam(defaultValue: true,
+                description: 'Send emails with the build status (true) or not (false)',
+                name: 'SEND_EMAILS')
+        string(defaultValue: 'ruben.kumar@hpe.com, sachin.uplaonkar@hpe.com, mark.balunis@hpe.com, tata@hpe.com',
+                description: 'Email address list to specify who should receive email about current build',
+                name: 'EMAIL_LIST')
+        booleanParam(defaultValue: true,
+                description: 'Run test suite with (true) or without (false) using Report Portal flag',
+                name: 'ENABLE_REPORT_PORTAL')
+    }
+
+    environment {
+        CONTAINER_NAME = "atlantia_e2e_scdev01_sanity"
+    }
+
+    stages {
+        stage('stop hanging containers') {
+            steps {
+                script {
+                    try{
+                        sh """
+                            docker stop \$(docker ps -a -q --filter='name=${CONTAINER_NAME}*')
+                            docker rm \$(docker ps -a -q --filter='name=${CONTAINER_NAME}*')
+                        """
+                    } catch (err) {
+                        echo "Error: ${err}"
+                    }
+                }
+            }
+        }
+
+        stage('Build Suite Configuration') {
+            steps {
+                script {
+                    if (params.SANITY_SUITES == 'EC2/EBS only') {
+                        suite_markers = ['ec2_ebs_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'RDS only') {
+                        suite_markers = ['rds_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'GFRS only') {
+                        suite_markers = ['gfrs_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'Single Volume only') {
+                        suite_markers = ['single_volume_sanity']
+                    }
+                    if (params.SANITY_SUITES == 'ACLM Sanity Setup only') {
+                        suite_markers = ['aclm_sanity_setup']
+                    }
+                }
+            }
+        }
+        stage('Checkout Repository') {
+            steps {
+                // git branch: "${params.BRANCH_NAME}", credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/qa_automation.git'
+                checkout(
+                    [$class: 'GitSCM',
+                    branches: [[name: "${params.BRANCH_NAME}"]],
+                    extensions: [cloneOption(noTags: false, reference: '', shallow: true, timeout: 30)],
+                    userRemoteConfigs: [[credentialsId: 'nmbljenkins', url: 'https://github.hpe.com/nimble/qa_automation.git']]]
+                )
+            }
+        }
+        stage('Copy Credentials') 
+        {
+            steps
+            {
+                withCredentials([file(credentialsId: 'key_pair', variable: 'key_pair'),file(credentialsId: 'scdev01_aws_env', variable: 'environment')]) {
+                sh ''' 
+                cp $key_pair $WORKSPACE/Medusa/key_pair.pem
+                cp $environment $WORKSPACE/Medusa/.env
+                chmod +x $WORKSPACE/Medusa/.env
+                '''
+                }
+
+            }
+        }
+        stage("Update Client and Secret IDs") {
+            steps {
+                script {
+                    // Get secret id for all users from Jenkins using client id stored as credentialId
+                    // Secret text format <client id>,<secret id>
+                    withCredentials([string(credentialsId: 'user_one_scdev01_sanity', variable: 'USER_ONE_CRED'), string(credentialsId: 'user_two_scdev01_sanity', variable: 'USER_TWO_CRED'), string(credentialsId: 'user_three_scdev01_sanity', variable: 'USER_THREE_CRED')]) {
+                        // Execute Python script to update the client and secret ids in the config file
+                        sh '''
+                            python3 $WORKSPACE/Medusa/utils/update_config_file.py variables_sanity_scdev01.ini admin $USER_ONE_CRED $USER_TWO_CRED $USER_THREE_CRED
+                        '''                        
+                    }
+                }
+            }
+        }
+        stage('Run Sanity Tests') {
+            steps {
+                    script 
+                    {
+                        // All operations on setup need to be in sequence and before parallel testing 
+                        // if fails next stages will not run
+                        currentBuild.description = "" // setting to empty string so that `null` is not reported
+                        generateRegressionTestStage("setup_sanity").call()
+
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') 
+                        {
+                            // use "suite_markers" after the "Build Suite Configuration" stage
+                            parallel suite_markers.collectEntries {
+                                ["${it}" : generateRegressionTestStage(it)]
+                            }
+                        }
+
+                        // Add Validation only if Setup was performed
+                        if ("aclm_sanity_setup" in suite_markers) {
+                            generateRegressionTestStage("aclm_sanity_validation").call()
+                        }
+
+                        generateRegressionTestStage("teardown_sanity").call()
+                    }   
+                }
+            }
+        }
+    post {
+        always {
+            script {
+                generateStopRegressionTestStage("setup_sanity").call()
+
+                // use "suite_markers" after the "Build Suite Configuration" stage
+                parallel suite_markers.collectEntries {
+                    ["${it}" : generateStopRegressionTestStage(it)]
+                }
+
+                // Add Validation only if Setup was performed
+                if ("aclm_sanity_setup" in suite_markers) {
+                    generateStopRegressionTestStage("aclm_sanity_validation").call()
+                }
+
+                generateStopRegressionTestStage("teardown_sanity").call()
+
+                try {
+                    echo "Attempting to remove dangling images using 'docker image prune -f'"
+                    sh "docker image prune -f"
+                    echo "Removed dangling images"
+                } catch (err) {
+                    echo "Failed to remove dangling images from the system"
+                }
+
+                cleanWs()
+
+                if (params.SEND_EMAILS) {
+                    def emailSubject = "${env.JOB_NAME} ${env.BUILD_NUMBER} - Status ${currentBuild.result}"
+                    def emailBodyTemplate = """
+                    Build ran on branch: ${params.BRANCH_NAME}
+                    Are logs on Report Portal?: ${params.ENABLE_REPORT_PORTAL}
+
+                    Link to build: ${env.BUILD_URL}
+                    Link to console: ${env.BUILD_URL}console
+                    Link to artifact: ${env.BUILD_URL}artifact
+                    """.stripIndent()
+
+                    emailBodyTemplate += currentBuild.description
+
+                    mail body: emailBodyTemplate, subject: emailSubject, to: params.EMAIL_LIST
+                }
+
+                color = [SUCCESS: "good",
+                         FAILURE: "danger"]
+                        .get(currentBuild.currentResult, "warning")
+
+
+                // Send notification to slack
+                slackSend (message: "${env.JOB_NAME} ${env.BUILD_NUMBER} - ${currentBuild.result}\n${env.BUILD_URL}console\n${currentBuild.description}",
+                           channel: 'jenkins_notifications',
+                           teamDomain: 'hpe-internal',
+                           tokenCredentialId: 'slack-notificaitons',
+                           color: "${color}",
+                           iconEmoji: ':hpe-bot')
+
+            }
+        }
+    }
+}

@@ -1,0 +1,10 @@
+--index-url https://sjcartifactory.eng.nimblestorage.com/artifactory/api/pypi/cloudvolumes-local/simple
+--extra-index-url https://pypi.org/simple
+findspark
+pyspark
+numpy
+pandas
+sqlalchemy
+pytest-html
+nimble-sdk
+allure-pytest

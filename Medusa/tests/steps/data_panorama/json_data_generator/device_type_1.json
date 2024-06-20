@@ -1,0 +1,1413 @@
+{
+    "Version": "1.0",
+    "PlatformCustomerID": "fc5f41652a53497e88cdcebc715cc1cf",
+    "CollectionID": "cbga3dooq6nvudoc9vpg",
+    "Region": "us-west-2",
+    "ApplicationCustomerID": "fc5f41652a53497e88cdcebc715cc1cf",
+    "ApplicationInstanceID": "fc5f41652a53497e88cdcebc715cc1cf",
+    "CollectionTrigger": "Planned",
+    "CollectionStartTime": "2022-08-09 09:29:38.992017614 +0000 UTC",
+    "CollectionEndTime": "2022-08-09 09:30:43.691124491 +0000 UTC",
+    "DeviceType": "deviceType1",
+    "HaulerType": "Fleet",
+    "CollectionType": "Inventory",
+    "Systems": [
+        {
+            "associatedLinks": [
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/ports",
+                    "type": "ports"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/storage-pools",
+                    "type": "storage-pools"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/applicationsets",
+                    "type": "applicationsets"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/support-settings",
+                    "type": "supportsettings"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/recommendations",
+                    "type": "swrecommendations"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/network-settings",
+                    "type": "ports-mgmt"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/telemetry",
+                    "type": "telemetry-status"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/capacity-summary",
+                    "type": "syscapacity"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/vm-manager-settings",
+                    "type": "vcentersettings"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/system-settings",
+                    "type": "system-settings"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/mail-settings",
+                    "type": "mail-settings"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/certificates",
+                    "type": "certificates"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/portal/device-type1/4UW0001540/component-summary",
+                    "type": "component-summary"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/network-services/snmp-mgr",
+                    "type": "snmp-mgr"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/network-services/cim",
+                    "type": "cim"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/network-services/vasa",
+                    "type": "vasa"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/alert-contacts",
+                    "type": "alert-contacts"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/volumes",
+                    "type": "volumes"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/swupdate/status",
+                    "type": "swupdatestatus"
+                },
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540/swupdate/history",
+                    "type": "swhistory"
+                }
+            ],
+            "centerplaneType": "4 Node Centerplane",
+            "chunkletSizeMiB": 1024,
+            "clusterLED": 7,
+            "consoleUri": "/data-ops-manager/storage-systems/device-type1/4UW0001540",
+            "customerId": "fc5f41652a53497e88cdcebc715cc1cf",
+            "descriptors": {
+                "comment": "",
+                "contact": "Dinesh D, 9888388, dd@email.com",
+                "location": "281 River Oaks, San Jose, CA, 95134, USA",
+                "owner": ""
+            },
+            "deviceId": 101756,
+            "deviceType": {
+                "default": "HPE_3PAR 8400",
+                "key": "sys_type-40"
+            },
+            "displayname": "System system_4UW0001540",
+            "domain": "",
+            "fqdn": "",
+            "generation": 1660056779,
+            "id": "4UW0001540",
+            "inClusterNodes": [
+                0,
+                1
+            ],
+            "isFIPSEnabled": false,
+            "locateEnabled": false,
+            "maintenanceMode": null,
+            "manufacturing": {
+                "assemblyRev": "",
+                "checkSum": "",
+                "hpeModelName": "",
+                "manufacturer": "HPE 3PAR",
+                "model": "HPE_3PAR 8400",
+                "saleablePartNumber": "",
+                "saleableSerialNumber": "",
+                "serialNumber": "4UW0001540",
+                "sparePartNumber": ""
+            },
+            "masterNode": 0,
+            "minimumPasswordLength": 6,
+            "name": "system_4UW0001540",
+            "networkMasterNode": 0,
+            "nodeMemory": "16",
+            "nodesCount": 2,
+            "nodesPresent": [
+                0,
+                1
+            ],
+            "onlineNodes": [
+                0,
+                1
+            ],
+            "parameters": {
+                "ServiceProcessorCookie": "SP4UW0001540",
+                "allowDomainUsersAffectNoDomain": false,
+                "allowSSZ": false,
+                "allowWrtbackSingleNode": 6,
+                "allowWrtbackUpgrade": 7,
+                "autoAdmitTune": true,
+                "autoExportAfterReboot": true,
+                "complianceOfficerApproval": false,
+                "disableChunkletInitUNMAP": false,
+                "enableAIQoS": "",
+                "eventLogNum": 1,
+                "eventLogSize": "4M",
+                "failoverMatchedSet": true,
+                "fcRawSpaceAlert": 0,
+                "hostDIF": "no",
+                "hostDIFTemplate": "",
+                "maxVolumeRetention": 54000,
+                "nlRawSpaceAlert": 0,
+                "overprovRatioLimit": 0,
+                "overprovRatioWarning": 0,
+                "personaProfile": "block-only",
+                "portFailoverEnabled": true,
+                "r6LayoutVersion": "Default",
+                "remoteCopyHostThrottling": false,
+                "remoteSysLog": 1,
+                "remoteSysLogHost": "15.3.2.1:8081",
+                "remoteSysLogSecurityHost": "14.3.2.1:8082",
+                "sessionTimeout": 3600,
+                "singleLunHost": false,
+                "ssdRawSpaceAlert": 0,
+                "thermalShutdown": true
+            },
+            "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540",
+            "safeToRemove": false,
+            "softwareVersions": {
+                "baseVersion": "4.3.0",
+                "components": [
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "CLI Server",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "System Manager",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.45",
+                        "name": "Kernel",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "IO Stack",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Drive Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Enclosure Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "34 (210323-4.3.0.84)",
+                        "fullVersion": "34 (210323-4.3.0.84)",
+                        "name": "Upgrade Tool",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "CIM Server",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "WSAPI Server",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Console Menu",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Event Manager",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Internal Test Tools",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "LD Check Tools",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Network Controller",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "PD Scrubber",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Per-Node Server",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Persistent Repository",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Powerfail Tools",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Preserved Data Tools",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Process Monitor",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Software Updater",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "TOC Server",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "VV Check Tools",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "1.14.0",
+                        "fullVersion": "1.14.0",
+                        "name": "SNMP Agent",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "7.9p1-10",
+                        "fullVersion": "7.9p1-10",
+                        "name": "SSH",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.0.9.1",
+                        "fullVersion": "4.0.9.1",
+                        "name": "VASA Provider",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "1.2.0.578",
+                        "fullVersion": "1.2.0.578",
+                        "name": "UI",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "1.10.0",
+                        "fullVersion": "1.10.0",
+                        "name": "Remote Support Agent",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "1.2.0",
+                        "fullVersion": "1.2.0",
+                        "name": "Real Time Scrubber",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Legacy FW Database",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Legacy Drive FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Emulex Drive FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Legacy HGST Drive FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Samsung FIPS Drive FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Samsung nonFIPS FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Seagate FIPS Drive FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Seagate nonFIPS FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "WDC FIPS 10K Drive FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "WDC FIPS 15K Drive FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "WDC FIPS SSD FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "WDC nonFIPS 10K FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "WDC nonFIPS 15K FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "WDC nonFIPS 7.2K FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "WDC nonFIPS SSD FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.3.0",
+                        "fullVersion": "4.3.0.84",
+                        "name": "Intel SCM FW",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "06.02.13",
+                        "fullVersion": "06.02.13",
+                        "name": "UEFI BIOS",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4.9.20",
+                        "fullVersion": "4.9.20",
+                        "name": "MCU Firmware (OKI)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "5.9.01",
+                        "fullVersion": "5.9.01",
+                        "name": "MCU Firmware (STM)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "7.2.26",
+                        "fullVersion": "7.2.26",
+                        "name": "MCU Firmware (STM7)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4082",
+                        "fullVersion": "4082",
+                        "name": "Cage Firmware (DCN2)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "0407",
+                        "fullVersion": "0407",
+                        "name": "Cage Firmware (DCN5)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "3.15",
+                        "fullVersion": "3.15",
+                        "name": "Cage Firmware (DCS5)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "3.15",
+                        "fullVersion": "3.15",
+                        "name": "Cage Firmware (DCS6)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4082",
+                        "fullVersion": "4082",
+                        "name": "Cage Firmware (DCS7)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "4082",
+                        "fullVersion": "4082",
+                        "name": "Cage Firmware (DCS8)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "3.15",
+                        "fullVersion": "3.15",
+                        "name": "Cage Firmware (DCS9)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "3.15",
+                        "fullVersion": "3.15",
+                        "name": "Cage Firmware (DCS10)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "0403",
+                        "fullVersion": "0403",
+                        "name": "Cage Firmware (DCS11)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "0403",
+                        "fullVersion": "0403",
+                        "name": "Cage Firmware (DCS12)",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "8.50.9.0",
+                        "fullVersion": "8.50.9.0",
+                        "name": "QLogic HPE41004 iSCSI Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "02.82.x10",
+                        "fullVersion": "02.82.x10",
+                        "name": "Emulex LP11002 HBA Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "02.10.x08",
+                        "fullVersion": "02.10.x08",
+                        "name": "Emulex LPe12002 HBA Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "02.10.x08",
+                        "fullVersion": "02.10.x08",
+                        "name": "Emulex LPe12004 HBA Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "12.2.396.1",
+                        "fullVersion": "12.2.396.1",
+                        "name": "Emulex LPe16002 HBA Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "12.2.396.1",
+                        "fullVersion": "12.2.396.1",
+                        "name": "Emulex LPe16004 HBA Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "12.2.396.2",
+                        "fullVersion": "12.2.396.2",
+                        "name": "Emulex LPe32002 HBA Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "12.2.396.2",
+                        "fullVersion": "12.2.396.2",
+                        "name": "Emulex LPe32004 HBA Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "200A8",
+                        "fullVersion": "200A8",
+                        "name": "3PAR FC044X HBA Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "10.10.03",
+                        "fullVersion": "10.10.03",
+                        "name": "LSI 9300 HBA SAS Firmware",
+                        "release": ""
+                    },
+                    {
+                        "baseVersion": "12.00.02",
+                        "fullVersion": "12.00.02",
+                        "name": "LSI 9400 HBA SAS Firmware",
+                        "release": ""
+                    }
+                ],
+                "fullVersion": "4.3.0.84",
+                "patches": "",
+                "release": ""
+            },
+            "state": {
+                "detailed": null,
+                "overall": 1
+            },
+            "sysLogStatus": {
+                "general": "",
+                "security": ""
+            },
+            "systemDate": 1620220897,
+            "systemWWN": "2FF70002AC018D7C",
+            "timezone": "Asia/Calcutta",
+            "type": "primera-system",
+            "uptime": {
+                "ms": 1619449560000,
+                "tz": "Local"
+            },
+            "version": {
+                "base": "4.3.0",
+                "display": "4.3.0",
+                "full": "4.3.0.84",
+                "fullWithoutPatches": "4.3.0.84"
+            }
+        }
+    ],
+    "SystemCapacity": [
+        {
+            "associatedLinks": [
+                {
+                    "resourceUri": "/api/v1/storage-systems/device-type1/4UW0001540",
+                    "type": "systems"
+                }
+            ],
+            "capacityByTier": {
+                "fcFree": 4056576,
+                "fcUsed": 705024,
+                "nlFree": 0,
+                "nlUsed": 0,
+                "ssdFree": 0,
+                "ssdUsed": 0,
+                "totalUsed": 705024,
+                "usableCapacity": 4056576
+            },
+            "capacitySummary": {
+                "allocated": {
+                    "cpgs": 98400,
+                    "cpgsFree": 337922,
+                    "cpgsPrivate": 940030,
+                    "cpgsPrivateBase": {
+                        "reserved": 472402,
+                        "reservedVVols": 0,
+                        "total": 472402
+                    },
+                    "cpgsPrivateSnap": {
+                        "reserved": 467628,
+                        "reservedVVols": 0,
+                        "total": 467628
+                    },
+                    "cpgsShared": 0,
+                    "legacyVolumes": 0,
+                    "legacyVolumesSnap": 0,
+                    "legacyVolumesUser": 0,
+                    "system": 2759680,
+                    "systemAdmin": 466944,
+                    "systemInternal": 1149952,
+                    "systemSpare": 1142784,
+                    "systemSpareUnused": 1142784,
+                    "systemSpareUsed": 0,
+                    "total": 4037632,
+                    "unmapped": 0
+                },
+                "allocatedPercentage": 0.44164425,
+                "compaction": 117561.21,
+                "compression": 0,
+                "dataReduction": 0,
+                "dedup": 0,
+                "failed": 0,
+                "failedPercentage": 0,
+                "free": 5104640,
+                "freeInitialized": 5104640,
+                "freePercentage": 0.55835575,
+                "freeUninitialized": 0,
+                "overProvisioning": 0.96,
+                "total": 9142272,
+                "unavailable": 0,
+                "unavailablePercentage": 0
+            },
+            "customerId": "fc5f41652a53497e88cdcebc715cc1cf",
+            "fcCapacitySummary": {
+                "allocated": {
+                    "cpgs": 1277952,
+                    "cpgsFree": 337922,
+                    "cpgsPrivate": 940030,
+                    "cpgsPrivateBase": {
+                        "reserved": 472402,
+                        "reservedVVols": 0,
+                        "total": 472402
+                    },
+                    "cpgsPrivateSnap": {
+                        "reserved": 467628,
+                        "reservedVVols": 0,
+                        "total": 467628
+                    },
+                    "cpgsShared": 0,
+                    "legacyVolumes": 0,
+                    "legacyVolumesSnap": 0,
+                    "legacyVolumesUser": 0,
+                    "system": 2759680,
+                    "systemAdmin": 466944,
+                    "systemInternal": 1149952,
+                    "systemSpare": 1142784,
+                    "systemSpareUnused": 1142784,
+                    "systemSpareUsed": 0,
+                    "total": 4037632,
+                    "unmapped": 0
+                },
+                "allocatedPercentage": 0.44164425,
+                "compaction": 117561.21,
+                "compression": 0,
+                "dataReduction": 0,
+                "dedup": 0,
+                "failed": 0,
+                "failedPercentage": 0,
+                "free": 5104640,
+                "freeInitialized": 5104640,
+                "freePercentage": 0.55835575,
+                "freeUninitialized": 0,
+                "overProvisioning": 0.96,
+                "total": 9142272,
+                "unavailable": 0,
+                "unavailablePercentage": 0
+            },
+            "id": "a5ab25ef51674a31cf8f201eda4617d1",
+            "nlCapacitySummary": {
+                "allocated": {
+                    "cpgs": 0,
+                    "cpgsFree": 0,
+                    "cpgsPrivate": 0,
+                    "cpgsPrivateBase": {
+                        "reserved": 0,
+                        "reservedVVols": 0,
+                        "total": 0
+                    },
+                    "cpgsPrivateSnap": {
+                        "reserved": 0,
+                        "reservedVVols": 0,
+                        "total": 0
+                    },
+                    "cpgsShared": 0,
+                    "legacyVolumes": 0,
+                    "legacyVolumesSnap": 0,
+                    "legacyVolumesUser": 0,
+                    "system": 0,
+                    "systemAdmin": 0,
+                    "systemInternal": 0,
+                    "systemSpare": 0,
+                    "systemSpareUnused": 0,
+                    "systemSpareUsed": 0,
+                    "total": 0,
+                    "unmapped": 0
+                },
+                "allocatedPercentage": 0,
+                "compaction": 0,
+                "compression": 0,
+                "dataReduction": 0,
+                "dedup": 0,
+                "failed": 0,
+                "failedPercentage": 0,
+                "free": 0,
+                "freeInitialized": 0,
+                "freePercentage": 0,
+                "freeUninitialized": 0,
+                "overProvisioning": 0,
+                "total": 0,
+                "unavailable": 0,
+                "unavailablePercentage": 0
+            },
+            "resourceUri": "",
+            "ssdCapacitySummary": {
+                "allocated": {
+                    "cpgs": 0,
+                    "cpgsFree": 0,
+                    "cpgsPrivate": 0,
+                    "cpgsPrivateBase": {
+                        "reserved": 0,
+                        "reservedVVols": 0,
+                        "total": 0
+                    },
+                    "cpgsPrivateSnap": {
+                        "reserved": 0,
+                        "reservedVVols": 0,
+                        "total": 0
+                    },
+                    "cpgsShared": 0,
+                    "legacyVolumes": 0,
+                    "legacyVolumesSnap": 0,
+                    "legacyVolumesUser": 0,
+                    "system": 0,
+                    "systemAdmin": 0,
+                    "systemInternal": 0,
+                    "systemSpare": 0,
+                    "systemSpareUnused": 0,
+                    "systemSpareUsed": 0,
+                    "total": 0,
+                    "unmapped": 0
+                },
+                "allocatedPercentage": 0,
+                "compaction": 0,
+                "compression": 0,
+                "dataReduction": 0,
+                "dedup": 0,
+                "failed": 0,
+                "failedPercentage": 0,
+                "free": 0,
+                "freeInitialized": 0,
+                "freePercentage": 0,
+                "freeUninitialized": 0,
+                "overProvisioning": 0,
+                "total": 0,
+                "unavailable": 0,
+                "unavailablePercentage": 0
+            },
+            "systemid": "",
+            "utilizationSummary": {
+                "capacityUsageData": {
+                    "freeSizeMiB": 4058624,
+                    "usedSizeMiB": 702976
+                },
+                "provisionedCapacity": 1643776
+            }
+        }
+    ],
+    "Volumes": {
+        "array1": [
+            {
+                "adminAllocationSettings": {
+                    "HA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "RAIDType": "",
+                    "deviceSpeed": {
+                        "text": "",
+                        "value": 0
+                    },
+                    "deviceType": "",
+                    "diskFilter": "",
+                    "requestedHA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "setSize": "",
+                    "stepSize": 0
+                },
+                "adminSpace": {
+                    "freeMiB": 0,
+                    "grownMiB": 0,
+                    "rawReservedMiB": 0,
+                    "reclaimedMiB": 0,
+                    "reservedMiB": 0,
+                    "totalMiB": 0,
+                    "usedMiB": 0
+                },
+                "associatedLinks": null,
+                "baseId": 0,
+                "comment": "",
+                "compactEfficiency": 0,
+                "compressionEfficiency": 0,
+                "compressionPolicy": "",
+                "consoleUri": "",
+                "conversionType": "",
+                "copiedMB": 0,
+                "copiedPerc": 0,
+                "copyOfID": 0,
+                "creationTime": {
+                    "ms": 0,
+                    "tz": ""
+                },
+                "customerId": "",
+                "dataReduction": "",
+                "ddcSize": 0,
+                "ddsSize": 0,
+                "dedup": "",
+                "dedupSavingsSize": 0,
+                "dedupWrittenSize": 0,
+                "devType": "",
+                "displayname": "",
+                "domain": "",
+                "efficiencyUpdateTime": {
+                    "ms": 0,
+                    "tz": ""
+                },
+                "expirationTime": {
+                    "ms": 0,
+                    "tz": ""
+                },
+                "fullyProvisioned": false,
+                "generation": 0,
+                "headsPerCylinder": 0,
+                "healthState": 0,
+                "hidden": false,
+                "hostWrittenMiB": 0,
+                "hostWrittenToVirtualPercent": 0,
+                "id": "",
+                "initiators": null,
+                "name": "",
+                "parentID": 0,
+                "physParentID": 0,
+                "physicalCopy": false,
+                "policy": {
+                    "fileService": false,
+                    "hostDif3par": false,
+                    "hostDifStd": false,
+                    "noCache": false,
+                    "oneHost": false,
+                    "staleSnapshot": false,
+                    "system": false,
+                    "zeroDetect": false,
+                    "zeroFill": false
+                },
+                "provType": "",
+                "raid": "",
+                "rcopyStatus": "",
+                "readOnly": false,
+                "resourceUri": "",
+                "retentionTime": {
+                    "ms": 0,
+                    "tz": ""
+                },
+                "roChildID": 0,
+                "rwChildID": 0,
+                "sectorsPerTrack": 0,
+                "sharedParentId": 0,
+                "sizeMiB": 0,
+                "snapShotTier": "",
+                "snapshotAllocLimit": 0,
+                "snapshotAllocWarning": 0,
+                "snapshotAllocationSettings": {
+                    "HA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "RAIDType": "",
+                    "deviceSpeed": {
+                        "text": "",
+                        "value": 0
+                    },
+                    "deviceType": "",
+                    "diskFilter": "",
+                    "requestedHA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "setSize": "",
+                    "stepSize": 0
+                },
+                "snapshotCpgID": 0,
+                "snapshotCpgName": "",
+                "snapshotSpace": {
+                    "freeMiB": 0,
+                    "grownMiB": 0,
+                    "rawReservedMiB": 0,
+                    "reclaimedMiB": 0,
+                    "reservedMiB": 0,
+                    "totalMiB": 0,
+                    "usedMiB": 0
+                },
+                "snapshotTdvvSize": {
+                    "ddcSizeMiB": 0,
+                    "ddsSizeMiB": 0,
+                    "virtualSizeMiB": 0,
+                    "writtenSizeMiB": 0
+                },
+                "snapshotUsedToVirtualPercent": 0,
+                "spaceCalculationTime": {
+                    "ms": 0,
+                    "tz": ""
+                },
+                "started": false,
+                "state": {
+                    "detailed": null,
+                    "overall": 0
+                },
+                "storageTier": "",
+                "systemId": "",
+                "thinProvisioned": false,
+                "thinSavings": "",
+                "totalRawReservedMiB": 0,
+                "totalReservedMiB": 0,
+                "totalSpaceMiB": 0,
+                "type": "",
+                "unrefSpaceFreedTime": {
+                    "ms": 0,
+                    "tz": ""
+                },
+                "usedCapacity": 0,
+                "usedSizeMiB": 0,
+                "userAllocLimit": 0,
+                "userAllocWarning": 0,
+                "userAllocationSettings": {
+                    "HA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "RAIDType": "",
+                    "deviceSpeed": {
+                        "text": "",
+                        "value": 0
+                    },
+                    "deviceType": "",
+                    "diskFilter": "",
+                    "requestedHA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "setSize": "",
+                    "stepSize": 0
+                },
+                "userCpgID": 0,
+                "userCpgName": "",
+                "userReservedToVirtualPercent": 0,
+                "userSpace": {
+                    "freeMiB": 0,
+                    "grownMiB": 0,
+                    "rawReservedMiB": 0,
+                    "reclaimedMiB": 0,
+                    "reservedMiB": 0,
+                    "totalMiB": 0,
+                    "usedMiB": 0
+                },
+                "userUsedToVirtualPercent": 0,
+                "vlunSectorSize": 0,
+                "volumeId": 0,
+                "volumeType": "",
+                "wwn": ""
+            }
+        ]
+    },
+    "Snapshots": {
+        "vol": [
+            {
+                "adminAllocationSettings": {
+                    "HA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "RAIDType": "",
+                    "deviceSpeed": {
+                        "text": "",
+                        "value": 0
+                    },
+                    "deviceType": "",
+                    "diskFilter": "",
+                    "requestedHA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "setSize": "",
+                    "stepSize": 0
+                },
+                "adminSpace": {
+                    "freeMiB": 0,
+                    "grownMiB": 0,
+                    "rawReservedMiB": 0,
+                    "reclaimedMiB": 0,
+                    "reservedMiB": 0,
+                    "totalMiB": 0,
+                    "usedMiB": 0
+                },
+                "baseId": 0,
+                "comment": "",
+                "compactEfficiency": 0,
+                "compressionEfficiency": 0,
+                "compressionPolicy": "",
+                "consoleUri": "",
+                "conversionType": "",
+                "copiedMB": 0,
+                "copiedPerc": 0,
+                "copyOfID": 0,
+                "creationTime": {
+                    "Ms": 0,
+                    "Tz": ""
+                },
+                "customerId": "",
+                "dataReduction": "",
+                "ddcSize": 0,
+                "ddsSize": 0,
+                "dedup": "",
+                "dedupSavingsSize": 0,
+                "dedupWrittenSize": 0,
+                "devType": "",
+                "displayname": "",
+                "domain": "",
+                "efficiencyUpdateTime": {
+                    "Ms": 0,
+                    "Tz": ""
+                },
+                "expirationTime": {
+                    "Ms": 0,
+                    "Tz": ""
+                },
+                "fullyProvisioned": false,
+                "generation": 0,
+                "headsPerCylinder": 0,
+                "healthState": 0,
+                "hidden": false,
+                "hostWrittenMiB": 0,
+                "hostWrittenToVirtualPercent": 0,
+                "id": "",
+                "name": "",
+                "parentID": 0,
+                "physParentID": 0,
+                "physicalCopy": false,
+                "policy": {
+                    "fileService": false,
+                    "hostDif3par": false,
+                    "hostDifStd": false,
+                    "noCache": false,
+                    "oneHost": false,
+                    "staleSnapshot": false,
+                    "system": false,
+                    "zeroDetect": false,
+                    "zeroFill": false
+                },
+                "provType": "",
+                "raid": "",
+                "rcopyStatus": "",
+                "readOnly": false,
+                "retentionTime": {
+                    "Ms": 0,
+                    "Tz": ""
+                },
+                "roChildID": 0,
+                "rwChildID": 0,
+                "sectorsPerTrack": 0,
+                "sharedParentId": 0,
+                "sizeMiB": 0,
+                "snapshotAllocLimit": 0,
+                "snapshotAllocWarning": 0,
+                "snapshotAllocationSettings": {
+                    "HA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "RAIDType": "",
+                    "deviceSpeed": {
+                        "text": "",
+                        "value": 0
+                    },
+                    "deviceType": "",
+                    "diskFilter": "",
+                    "requestedHA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "setSize": "",
+                    "stepSize": 0
+                },
+                "snapshotCpgID": 0,
+                "snapshotCpgName": "",
+                "snapshotId": 0,
+                "snapshotSpace": {
+                    "freeMiB": 0,
+                    "grownMiB": 0,
+                    "rawReservedMiB": 0,
+                    "reclaimedMiB": 0,
+                    "reservedMiB": 0,
+                    "totalMiB": 0,
+                    "usedMiB": 0
+                },
+                "snapshotTdvvSize": {
+                    "ddcSizeMiB": 0,
+                    "ddsSizeMiB": 0,
+                    "virtualSizeMiB": 0,
+                    "writtenSizeMiB": 0
+                },
+                "snapshotType": "",
+                "snapshotUsedToVirtualPercent": 0,
+                "spaceCalculationTime": {
+                    "Ms": 0,
+                    "Tz": ""
+                },
+                "started": false,
+                "state": {
+                    "detailed": null,
+                    "overall": 0
+                },
+                "systemId": "",
+                "thinProvisioned": false,
+                "totalRawReservedMiB": 0,
+                "totalReservedMiB": 0,
+                "totalSpaceMiB": 0,
+                "type": "",
+                "unrefSpaceFreedTime": {
+                    "Ms": 0,
+                    "Tz": ""
+                },
+                "usedCapacity": 0,
+                "usedSizeMiB": 0,
+                "userAllocLimit": 0,
+                "userAllocWarning": 0,
+                "userAllocationSettings": {
+                    "HA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "RAIDType": "",
+                    "deviceSpeed": {
+                        "text": "",
+                        "value": 0
+                    },
+                    "deviceType": "",
+                    "diskFilter": "",
+                    "requestedHA": {
+                        "default": "",
+                        "key": ""
+                    },
+                    "setSize": "",
+                    "stepSize": 0
+                },
+                "userCpgID": 0,
+                "userCpgName": "",
+                "userReservedToVirtualPercent": 0,
+                "userSpace": {
+                    "freeMiB": 0,
+                    "grownMiB": 0,
+                    "rawReservedMiB": 0,
+                    "reclaimedMiB": 0,
+                    "reservedMiB": 0,
+                    "totalMiB": 0,
+                    "usedMiB": 0
+                },
+                "userUsedToVirtualPercent": 0,
+                "vlunSectorSize": 0,
+                "wwn": ""
+            }
+        ]
+    },
+    "Vluns": {
+        "volid": [
+            {
+                "active": false,
+                "consoleUri": "",
+                "customerId": "fc5f41652a53497e88cdcebc715cc1cf",
+                "deviceWWNs": "",
+                "diskPartition": "",
+                "displayname": "VLUN 122",
+                "domain": "-",
+                "failedPathInterval": 0,
+                "failedPathPolicy": "Unknown",
+                "id": "06bda055dc47f98ae41378800799fc03",
+                "initiators": null,
+                "lun": 122,
+                "mountPoint": "",
+                "mountPointFsau": -1,
+                "multiPathType": "Unknown",
+                "portPos": {
+                    "node": 0,
+                    "port": 0,
+                    "slot": 0
+                },
+                "rawVolume": "",
+                "remoteName": "FFFFFFFFFFFFFFF6",
+                "requestUri": "",
+                "resourceUri": "",
+                "state": {
+                    "detailed": null,
+                    "overall": 0
+                },
+                "status": "--",
+                "systemId": "4UW0001540",
+                "tpgId": 0,
+                "type": "vlun",
+                "usedSpace": -1,
+                "volumeGroup": "",
+                "volumeManager": "",
+                "volumeName": "PundlikTestLargeSet.27",
+                "volumeWWN": "60002AC0000000000001177900018D7C",
+                "vvReservedUserSpace": 1024,
+                "vvSize": 1024
+            }
+        ]
+    },
+    "Applicationsets": {
+        "array": [
+            {
+                "appSetBusinessUnit": "BU",
+                "appSetComments": "",
+                "appSetExcludeAIQoS": "",
+                "appSetId": 28,
+                "appSetImportance": "NORMAL",
+                "appSetName": "PundlikLargeSetTest",
+                "appSetType": "SAP HANA",
+                "associatedLink": null,
+                "comment": "",
+                "consoleUri": "",
+                "customerId": "fc5f41652a53497e88cdcebc715cc1cf",
+                "displayname": "",
+                "domain": "-",
+                "exportStatus": "PARTIALLY_EXPORTED",
+                "generation": 1660056744,
+                "id": "c3758a6b0e228208f5d6a0f0175e793c",
+                "initiators": null,
+                "isFailoverAllowed": false,
+                "isOverrideAllowed": false,
+                "isPrimary": false,
+                "isSyncAllowed": false,
+                "kvPairsPresent": true,
+                "members": [],
+                "name": "PundlikLargeSetTest",
+                "nonZeroRtoConfig": "",
+                "remoteRecoveryPoint": {
+                    "ms": 0,
+                    "tz": ""
+                },
+                "replicationPartner": null,
+                "replicationState": "",
+                "replicationTraffic": "",
+                "replicationType": "",
+                "serialNumber": "",
+                "sizeMiB": 24576,
+                "snapSetParentId": -1,
+                "snapSetParentName": "",
+                "systemId": "4UW0001540",
+                "type": "application-set",
+                "vvSetType": "APPSET",
+                "zeroRtoConfig": ""
+            }
+        ]
+    },
+    "VolumePerformance": [
+        {
+            "systemId": "4UW0001540",
+            "volumeId": "",
+            "customerId": "",
+            "iops": {
+                "read": {
+                    "avgOf1day": 0,
+                    "avgOf1hour": 0,
+                    "avgOf8hours": 0,
+                    "avgOfLatest": 0
+                },
+                "total": {
+                    "avgOf1day": 0,
+                    "avgOf1hour": 0,
+                    "avgOf8hours": 0,
+                    "avgOfLatest": 0
+                },
+                "write": {
+                    "avgOf1day": 0,
+                    "avgOf1hour": 0,
+                    "avgOf8hours": 0,
+                    "avgOfLatest": 0
+                }
+            },
+            "latencyMs": {
+                "read": {
+                    "avgOf1day": 0,
+                    "avgOf1hour": 0,
+                    "avgOf8hours": 0,
+                    "avgOfLatest": 0
+                },
+                "total": {
+                    "avgOf1day": 0,
+                    "avgOf1hour": 0,
+                    "avgOf8hours": 0,
+                    "avgOfLatest": 0
+                },
+                "write": {
+                    "avgOf1day": 0,
+                    "avgOf1hour": 0,
+                    "avgOf8hours": 0,
+                    "avgOfLatest": 0
+                }
+            },
+            "requestUri": "",
+            "resourceUri": "",
+            "throughputKbps": {
+                "read": {
+                    "avgOf1day": 0,
+                    "avgOf1hour": 0,
+                    "avgOf8hours": 0,
+                    "avgOfLatest": 0
+                },
+                "total": {
+                    "avgOf1day": 0,
+                    "avgOf1hour": 0,
+                    "avgOf8hours": 0,
+                    "avgOfLatest": 0
+                },
+                "write": {
+                    "avgOf1day": 0,
+                    "avgOf1hour": 0,
+                    "avgOf8hours": 0,
+                    "avgOfLatest": 0
+                }
+            }
+        }
+    ],
+    "Error": {}
+}
